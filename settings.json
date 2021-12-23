@@ -4,6 +4,6 @@
   "dataBaseName": "${DATA_BASE_NAME}",
   "dataBaseHost": "${DATA_BASE_HOST}",
   "dataBasePort": "${DATA_BASE_PORT}",
-  "dataBaseUser": "${DATA_BASE_USER}",
+  "dataBaseUser": "${DATAs_BASE_USER}",
   "dataBasePassword": "${DATA_BASE_PASSWORD}"
 }
