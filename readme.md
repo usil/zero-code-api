@@ -1,6 +1,11 @@
 # zero-code-api 0.0.1-pre-alpha
 
-Zero Code Api is low code platform to expose mysql database as a Restful Api wih endpoints ready to use.
+Zero Code Api is low code platform to expose mysql database as a Restful Api wih endpoints ready to use. This is an alternative to these tools `strapi, nocodb, xmysql, dreamfactory, deployd`.
+
+## Features
+
+- Ready to use restful CRUD operations
+- Swagger portal to play with endpoints
 
 ## Requirements
 
@@ -29,11 +34,11 @@ First run `npm install`. To start development run `npm run dev`.
 
 For production you should build your app `npm run build` will create a dist file. Then run `npm start`.
 
-## Accessing the end-points
+## Accessing the endpoints
 
-You can look for a complete swagger documentation of every auto generated end-point for your database going to `/api/docs`.
+You can look for a complete swagger documentation of every auto generated endpoint for your database going to `/api/docs`.
 
-| Method | End-point                 | Description                               |
+| Method | Endpoint                  | Description                               |
 | ------ | ------------------------- | ----------------------------------------- |
 | GET    | `/api/<table_name>`       | Get all table rows                        |
 | POST   | `/api/<table_name>`       | Create a new route                        |
@@ -42,20 +47,22 @@ You can look for a complete swagger documentation of every auto generated end-po
 | DELETE | `/api/<table_name>/:id`   | Delete one row from the table given an id |
 | POST   | `/api/<table_name>/query` | Query the table data                      |
 
-## The query end point
+**Every table primary key should be named id**
+
+## The query endpoint
 
 Using a `POST` method in `/api/<table_name>/query` you will be able your query the table data.
 
 In the body you should send an object:
 
-| Key     | End-point                                            | Type       |
+| Key     | Endpoint                                             | Type       |
 | ------- | ---------------------------------------------------- | ---------- |
 | filters | An array of filters                                  | `Filter[]` |
 | fields  | An array of the columns that you want to be returned | `string[]` |
 
 ### The filter object
 
-| Key       | End-point                                                     | Type      |
+| Key       | Endpoint                                                      | Type      |
 | --------- | ------------------------------------------------------------- | --------- |
 | column    | The name of the column to filter by                           | `string`  |
 | value     | The column value                                              | `any`     |
@@ -69,7 +76,7 @@ The supported operations are: `'<' | '>' | '=' | '<=' | '>=' | '<>' | 'in' | 'be
 
 ### Pagination
 
-It defaults to pagination to disable send in the query `/api/<table_name>/query?pagination=false`. You can also send `itemsPerPage` and `pageIndex`.
+By default the pagination is enabled. To disable it send in the query `/api/<table_name>/query?pagination=false`. You can also send `itemsPerPage` and `pageIndex`.
 
 ## Libraries used
 
@@ -77,6 +84,14 @@ It defaults to pagination to disable send in the query `/api/<table_name>/query?
 - Express
 - Swagger
 - Advanced-settings
+
+## Roadmap
+
+- Unit test & coverage
+- Security
+- Nested relationships
+- Improve swagger data types
+- Blue and green for maintenance
 
 ## License
 
