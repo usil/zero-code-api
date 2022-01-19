@@ -4,6 +4,7 @@
   "dataBaseName": "${DATA_BASE_NAME}",
   "dataBaseHost": "${DATA_BASE_HOST}",
   "dataBasePort": "${DATA_BASE_PORT}",
-  "dataBaseUser": "${DATAs_BASE_USER}",
-  "dataBasePassword": "${DATA_BASE_PASSWORD}"
+  "dataBaseUser": "${DATA_BASE_USER}",
+  "dataBasePassword": "${DATA_BASE_PASSWORD}",
+  "jwtSecret": "${JWT_SECRET}"
 }

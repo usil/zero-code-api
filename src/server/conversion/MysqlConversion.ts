@@ -7,6 +7,13 @@ interface Table {
   table_schema: string;
 }
 
+interface FullTable {
+  table_name: string;
+  table_comment?: string;
+  table_schema: string;
+  columns: Column[];
+}
+
 interface Column {
   column_name: string;
   column_default: string;
@@ -33,7 +40,7 @@ class MySqlConversion {
     this.configuration = configuration;
   }
 
-  private async getTables(): Promise<[Table[], null] | [null, string]> {
+  async getTables(): Promise<[Table[], null] | [null, string]> {
     try {
       const sqlStatement = `SELECT table_name, table_comment, table_schema 
       FROM information_schema.tables WHERE table_schema = '${this.configuration.dataBaseName}'`;
@@ -42,6 +49,44 @@ class MySqlConversion {
       )) as any as any[];
       const tables = tablesPreParse[0] as Table[];
       return [tables, null];
+    } catch (error) {
+      console.error(error);
+      return [null, error.message];
+    }
+  }
+
+  async getTable(tableName: string): Promise<[Table, null] | [null, string]> {
+    try {
+      const sqlStatement = `SELECT table_name, table_comment, table_schema 
+      FROM information_schema.tables WHERE table_schema = '${this.configuration.dataBaseName}' AND table_name = '${tableName}'`;
+      const tablesPreParse = (await this.knex.schema.raw(
+        sqlStatement,
+      )) as any as any[];
+      const table = tablesPreParse[0] as Table[];
+      return [table[0], null];
+    } catch (error) {
+      console.error(error);
+      return [null, error.message];
+    }
+  }
+
+  async getFullTable(
+    tableName: string,
+  ): Promise<[FullTable, null] | [null, string]> {
+    try {
+      const [table, error] = await this.getTable(tableName);
+      if (error) return [null, error];
+      const [columns, errorColumns] = await this.getTableColumns(table);
+      if (errorColumns) return [null, errorColumns];
+      return [
+        {
+          table_name: table.table_name,
+          table_comment: table.table_comment,
+          table_schema: table.table_schema,
+          columns,
+        },
+        null,
+      ];
     } catch (error) {
       console.error(error);
       return [null, error.message];

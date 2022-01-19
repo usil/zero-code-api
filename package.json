@@ -1,7 +1,7 @@
 {
-  "name": "template-knex",
+  "name": "zero-code",
   "version": "0.0.1",
-  "description": "A template to use knex with mysql",
+  "description": "Zero code api",
   "main": "./dist/main.js",
   "scripts": {
     "test": "cross-env NODE_ENV=test jest --verbose --silent --collectCoverage  && jest-coverage-badges",
@@ -24,6 +24,7 @@
     "knex": "^0.95.14",
     "morgan": "^1.10.0",
     "mysql2": "^2.3.3",
+    "nodeboot-oauth2-starter": "git+https://github.com/usil/nodeboot-oauth2.git#sprint1-snapshot",
     "swagger-ui-express": "^4.3.0",
     "throng": "^5.0.0",
     "tslib": "^2.3.1"

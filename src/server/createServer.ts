@@ -4,8 +4,10 @@ import { createRouteExample } from './routes/exampleRoute';
 /**
  * @description Creates the server
  */
-export const newServer = (port: number) => {
+export const newServer = async (port: number) => {
   const serverInit = new ServerInitialization(port);
+
+  await serverInit.init();
 
   /**
    * * Creates the routes for the example.

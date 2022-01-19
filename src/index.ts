@@ -4,13 +4,13 @@ import { newServer } from './server/createServer';
 
 const WORKERS = 1;
 
-const start = (id: number) => {
+const start = async (id: number) => {
   const configuration = getConfig();
 
   const port = configuration.port;
 
   configuration.log().info(`Id Worker ${id}`);
-  const serverApp = newServer(port);
+  const serverApp = await newServer(port);
   const server = serverApp.server;
 
   server.on('listening', () => {

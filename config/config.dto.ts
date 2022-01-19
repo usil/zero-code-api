@@ -12,6 +12,7 @@ export class ConfigGlobalDto {
   dataBasePort: number;
   dataBaseUser: string;
   dataBasePassword: string;
+  jwtSecret: string;
 }
 
 export default new ConfigGlobalDto();

@@ -6,6 +6,7 @@ import swaggerUI from 'swagger-ui-express';
 import MysqlConversion from './MysqlConversion';
 import { NextFunction, Request, Response } from 'express';
 import SwaggerGenerator from './SwaggerGenerator';
+import GeneralHelpers from './GeneralHelpers';
 
 interface Table {
   table_name: string;
@@ -29,12 +30,16 @@ interface Column {
 
 class Conversion {
   knex: Knex;
+  oauthBoot: any;
+  authRouter: any;
   knexConfig: Knex.Config;
   configuration = getConfig();
   conversionHelpers: ConversionHelpers;
   conversionRouter: Route;
+  generalHelpers: GeneralHelpers;
 
-  constructor(knex: Knex) {
+  constructor(knex: Knex, oauthBoot: any) {
+    this.oauthBoot = oauthBoot;
     this.knex = knex;
     this.knexConfig = knex.client.config;
   }
@@ -48,16 +53,31 @@ class Conversion {
     }
   }
 
-  generateConversionRouter() {
-    this.conversionHelpers = new ConversionHelpers(this.knex);
-    this.conversionRouter = new Route('/api');
-    this.setSwaggerEndPoint();
-    this.setGetAll();
-    this.setCreate();
-    this.setQuery();
-    this.setGetOneById();
-    this.setDeleteOneById();
-    this.setGetUpdateById();
+  async generateConversionRouter() {
+    try {
+      this.conversionHelpers = new ConversionHelpers(this.knex);
+      this.generalHelpers = new GeneralHelpers(this.knex, this.configuration);
+      this.conversionRouter = new Route('/api');
+      this.authRouter = this.oauthBoot.bootOauthExpressRouter(
+        this.conversionRouter.router,
+      );
+      const mysqlConversion = MysqlConversion(this.knex, this.configuration);
+      const [tables, error] = await mysqlConversion.getTables();
+      if (error) {
+        throw new Error('An error ocurred while reading the database tables');
+      }
+      this.setSwaggerEndPoint();
+      this.setGetTablesList();
+      this.setGetFullTable();
+      this.setGetALLEndpoints(tables);
+      this.setGetOneByIdEndpoints(tables);
+      this.setGetUpdateByIdEndpoints(tables);
+      this.setDeleteOneByIdEndpoints(tables);
+      this.setCreateEndpoints(tables);
+      this.setQueryEndpoints(tables);
+    } catch (error) {
+      throw new Error(error.message);
+    }
   }
 
   setSwaggerEndPoint() {
@@ -103,45 +123,81 @@ class Conversion {
     );
   }
 
-  setGetOneById() {
-    this.conversionRouter.router.get(
-      '/:table_name/:id',
-      this.conversionHelpers.getOneById,
-    );
+  setGetALLEndpoints(tablesList: Table[]) {
+    for (const table of tablesList) {
+      const tableName = table.table_name;
+      this.authRouter.obGet(
+        `/${tableName}`,
+        `/${tableName}:select`,
+        this.conversionHelpers.getAll(tableName),
+      );
+    }
   }
 
-  setGetUpdateById() {
-    this.conversionRouter.router.put(
-      '/:table_name/:id',
-      this.conversionHelpers.updateOneById,
-    );
+  setGetOneByIdEndpoints(tablesList: Table[]) {
+    for (const table of tablesList) {
+      const tableName = table.table_name;
+      this.authRouter.obGet(
+        `/${tableName}/:id`,
+        `/${tableName}:select`,
+        this.conversionHelpers.getOneById(tableName),
+      );
+    }
   }
 
-  setDeleteOneById() {
-    this.conversionRouter.router.delete(
-      '/:table_name/:id',
-      this.conversionHelpers.deleteOneById,
-    );
+  setGetUpdateByIdEndpoints(tablesList: Table[]) {
+    for (const table of tablesList) {
+      const tableName = table.table_name;
+      this.authRouter.obPut(
+        `/${tableName}/:id`,
+        `/${tableName}:update`,
+        this.conversionHelpers.updateOneById(tableName),
+      );
+    }
   }
 
-  setGetAll() {
-    this.conversionRouter.router.get(
-      '/:table_name',
-      this.conversionHelpers.getAll,
-    );
+  setDeleteOneByIdEndpoints(tablesList: Table[]) {
+    for (const table of tablesList) {
+      const tableName = table.table_name;
+      this.authRouter.obPut(
+        `/${tableName}/:id`,
+        `/${tableName}:delete`,
+        this.conversionHelpers.deleteOneById(tableName),
+      );
+    }
   }
 
-  setCreate() {
-    this.conversionRouter.router.post(
-      '/:table_name',
-      this.conversionHelpers.create,
-    );
+  setCreateEndpoints(tablesList: Table[]) {
+    for (const table of tablesList) {
+      const tableName = table.table_name;
+      this.authRouter.obPost(
+        `/${tableName}`,
+        `/${tableName}:create`,
+        this.conversionHelpers.create(tableName),
+      );
+    }
   }
 
-  setQuery() {
-    this.conversionRouter.router.post(
-      '/:table_name/query',
-      this.conversionHelpers.query,
+  setQueryEndpoints(tablesList: Table[]) {
+    for (const table of tablesList) {
+      const tableName = table.table_name;
+      this.authRouter.obPost(
+        `/${tableName}/query`,
+        `/${tableName}:select`,
+        this.conversionHelpers.query(tableName),
+      );
+    }
+  }
+
+  setGetTablesList() {
+    this.authRouter.obGet('/table', ':', this.generalHelpers.getAllTables);
+  }
+
+  setGetFullTable() {
+    this.authRouter.obGet(
+      '/table/:tableName',
+      ':',
+      this.generalHelpers.getFullTable,
     );
   }
 }
