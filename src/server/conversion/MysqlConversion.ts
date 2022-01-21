@@ -42,8 +42,12 @@ class MySqlConversion {
 
   async getTables(): Promise<[Table[], null] | [null, string]> {
     try {
-      const sqlStatement = `SELECT table_name, table_comment, table_schema 
+      let sqlStatement = `SELECT table_name, table_comment, table_schema 
       FROM information_schema.tables WHERE table_schema = '${this.configuration.dataBaseName}'`;
+      const occultSystemTablesSql = ` AND substring(table_name, 1, 7) <> 'OAUTH2_'`;
+      if (this.configuration.occultSystemTables) {
+        sqlStatement += occultSystemTablesSql;
+      }
       const tablesPreParse = (await this.knex.schema.raw(
         sqlStatement,
       )) as any as any[];
@@ -80,7 +84,7 @@ class MySqlConversion {
       if (errorColumns) return [null, errorColumns];
       return [
         {
-          table_name: table.table_name,
+          table_name: tableName,
           table_comment: table.table_comment,
           table_schema: table.table_schema,
           columns,

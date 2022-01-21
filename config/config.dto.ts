@@ -13,6 +13,10 @@ export class ConfigGlobalDto {
   dataBaseUser: string;
   dataBasePassword: string;
   jwtSecret: string;
+  swaggerEmail: string;
+  swaggerName: string;
+  swaggerUrl: string;
+  occultSystemTables: boolean;
 }
 
 export default new ConfigGlobalDto();

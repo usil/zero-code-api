@@ -65,6 +65,7 @@ class SwaggerGenerator {
       if (Object.prototype.hasOwnProperty.call(tablesColumns, tableName)) {
         paths[`/api/${tableName}`] = {
           get: {
+            security: [{ 'Access Token': [] }, { 'Access Token Header': [] }],
             tags: [tableName],
             summary: `Get all ${tableName} rows`,
             responses: {
@@ -95,8 +96,49 @@ class SwaggerGenerator {
                 },
               },
             },
+            parameters: [
+              {
+                name: 'orderByColumn',
+                in: 'query',
+                required: true,
+                schema: {
+                  type: 'string',
+                  description: 'The column name to order by',
+                  default: 'id',
+                },
+              },
+              {
+                name: 'orderType',
+                in: 'query',
+                required: false,
+                schema: {
+                  type: 'string',
+                  enum: ['asc', 'desc'],
+                  default: 'asc',
+                },
+              },
+              {
+                name: 'pageIndex',
+                in: 'query',
+                required: false,
+                schema: {
+                  type: 'number',
+                  description: 'The page number starting from 0',
+                },
+              },
+              {
+                name: 'itemsPerPage',
+                in: 'query',
+                required: false,
+                schema: {
+                  type: 'number',
+                  description: 'The number of items in a page',
+                },
+              },
+            ],
           },
           post: {
+            security: [{ 'Access Token': [] }, { 'Access Token Header': [] }],
             tags: [tableName],
             summary: `Create a new ${tableName} row`,
             requestBody: {
@@ -151,6 +193,7 @@ class SwaggerGenerator {
 
         paths[`/api/${tableName}/{id}`] = {
           get: {
+            security: [{ 'Access Token': [] }, { 'Access Token Header': [] }],
             tags: [tableName],
             summary: `Get one ${tableName} row`,
             parameters: [
@@ -163,6 +206,16 @@ class SwaggerGenerator {
                 schema: {
                   type: 'string',
                   description: 'Id of the row',
+                },
+              },
+              {
+                name: 'identifierColumn',
+                in: 'query',
+                required: false,
+                schema: {
+                  type: 'string',
+                  description: 'If this table has other identifier name',
+                  default: 'id',
                 },
               },
             ],
@@ -194,6 +247,7 @@ class SwaggerGenerator {
             },
           },
           put: {
+            security: [{ 'Access Token': [] }, { 'Access Token Header': [] }],
             tags: [tableName],
             summary: `Update one ${tableName} row`,
             parameters: [
@@ -206,6 +260,16 @@ class SwaggerGenerator {
                 schema: {
                   type: 'string',
                   description: 'Id of the row',
+                },
+              },
+              {
+                name: 'identifierColumn',
+                in: 'query',
+                required: false,
+                schema: {
+                  type: 'string',
+                  description: 'If this table has other identifier name',
+                  default: 'id',
                 },
               },
             ],
@@ -247,6 +311,7 @@ class SwaggerGenerator {
             },
           },
           delete: {
+            security: [{ 'Access Token': [] }, { 'Access Token Header': [] }],
             tags: [tableName],
             summary: `Delete one ${tableName} row`,
             parameters: [
@@ -259,6 +324,16 @@ class SwaggerGenerator {
                 schema: {
                   type: 'string',
                   description: 'Id of the row',
+                },
+              },
+              {
+                name: 'identifierColumn',
+                in: 'query',
+                required: false,
+                schema: {
+                  type: 'string',
+                  description: 'If this table has other identifier name',
+                  default: 'id',
                 },
               },
             ],
@@ -292,6 +367,7 @@ class SwaggerGenerator {
 
         paths[`/api/${tableName}/query`] = {
           post: {
+            security: [{ 'Access Token': [] }, { 'Access Token Header': [] }],
             tags: [tableName],
             summary: `Query the ${tableName} table`,
             requestBody: {
@@ -454,6 +530,18 @@ class SwaggerGenerator {
       paths,
       components: {
         schemas,
+        securitySchemes: {
+          'Access Token': {
+            type: 'apiKey',
+            in: 'query',
+            name: 'access_token',
+          },
+          'Access Token Header': {
+            type: 'apiKey',
+            in: 'header',
+            name: 'Authorization',
+          },
+        },
       },
     };
     return baseSwaggerJson;

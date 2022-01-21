@@ -6,5 +6,9 @@
   "dataBasePort": "${DATA_BASE_PORT}",
   "dataBaseUser": "${DATA_BASE_USER}",
   "dataBasePassword": "${DATA_BASE_PASSWORD}",
-  "jwtSecret": "${JWT_SECRET}"
+  "jwtSecret": "${JWT_SECRET}",
+  "swaggerEmail": "${SWAGGER_EMAIL}",
+  "swaggerName": "${SWAGGER_NAME}",
+  "swaggerUrl": "${SWAGGER_URL}",
+  "occultSystemTables": true
 }

@@ -68,6 +68,8 @@ class ServerInitialization
 
       this.addBasicConfiguration();
 
+      oauthBoot.setTokenExpirationTime('12h');
+
       await oauthBoot.init();
 
       await this.exposeDataBase(oauthBoot);
@@ -102,7 +104,7 @@ class ServerInitialization
         port: this.configuration.dataBasePort,
         user: this.configuration.dataBaseUser,
         password: this.configuration.dataBasePassword,
-        database: 'auth_zc',
+        database: this.configuration.dataBaseName,
       },
       pool: { min: 0, max: 5 },
     });

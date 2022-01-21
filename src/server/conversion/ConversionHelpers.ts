@@ -24,11 +24,66 @@ class ConversionHelpers {
   getAll = (tableName: string) => {
     return async (req: Request, res: Response) => {
       try {
-        const result = await this.knex.table(tableName).select();
-        return res.json({ result, message: 'success', code: 200000 });
+        let orderType = 'asc';
+        let orderByColumn = 'id';
+        let itemsPerPage = 20;
+        let pageIndex = 0;
+
+        if (
+          req.query['itemsPerPage'] &&
+          parseInt(req.query['itemsPerPage'] as string) >= 1
+        ) {
+          itemsPerPage = parseInt(req.query['itemsPerPage'] as string);
+        }
+
+        if (
+          req.query['pageIndex'] &&
+          parseInt(req.query['pageIndex'] as string) >= 0
+        ) {
+          pageIndex = parseInt(req.query['pageIndex'] as string);
+        }
+
+        if (
+          req.query['orderType'] &&
+          (req.query['orderType'] === 'desc' ||
+            req.query['orderType'] === 'asc')
+        ) {
+          orderType = req.query['orderType'] as string;
+        }
+
+        if (req.query['orderByColumn']) {
+          orderByColumn = req.query['orderByColumn'] as string;
+        }
+
+        const offset = itemsPerPage * pageIndex;
+
+        const totalCount = (await this.knex.table(tableName).count())[0][
+          'count(*)'
+        ] as number;
+
+        const totalPages = Math.ceil(totalCount / itemsPerPage);
+
+        const result = await this.knex
+          .table(tableName)
+          .select()
+          .limit(itemsPerPage)
+          .offset(offset)
+          .orderBy(orderByColumn, orderType);
+
+        return res.status(201).json({
+          content: {
+            items: result,
+            pageIndex,
+            itemsPerPage,
+            totalItems: totalCount,
+            totalPages,
+          },
+          message: 'success',
+          code: 200001,
+        });
       } catch (error) {
         console.error(error);
-        return res.json({ message: error.message, code: 500000 });
+        return res.status(500).json({ message: error.message, code: 500000 });
       }
     };
   };
@@ -39,12 +94,17 @@ class ConversionHelpers {
         const result = await this.knex
           .table(tableName)
           .insert([...req.body.inserts]);
-        return res
-          .status(201)
-          .json({ result, message: 'success', code: 200001 });
+        const responseObj: Record<string, any> = {
+          message: 'success',
+          code: 200001,
+        };
+        if ([...req.body.inserts].length === 0) {
+          responseObj.content = result;
+        }
+        return res.status(201).json(responseObj);
       } catch (error) {
         console.error(error);
-        return res.json({ message: error.message, code: 500000 });
+        return res.status(500).json({ message: error.message, code: 500000 });
       }
     };
   };
@@ -52,18 +112,22 @@ class ConversionHelpers {
   updateOneById = (tableName: string) => {
     return async (req: Request, res: Response) => {
       try {
+        let identifierColumn = 'id';
+        if (req.query['identifierColumn']) {
+          identifierColumn = req.query['identifierColumn'] as string;
+        }
         const result = await this.knex
           .table(tableName)
-          .where({ id: req.params.id })
-          .update(req.body, ['id']);
+          .where({ [identifierColumn]: req.params.id })
+          .update(req.body, []);
         return res.json({
-          result: result[0],
+          content: result[0],
           message: 'success',
           code: 200001,
         });
       } catch (error) {
         console.error(error);
-        return res.json({ message: error.message, code: 500000 });
+        return res.status(500).json({ message: error.message, code: 500000 });
       }
     };
   };
@@ -71,18 +135,22 @@ class ConversionHelpers {
   getOneById = (tableName: string) => {
     return async (req: Request, res: Response) => {
       try {
+        let identifierColumn = 'id';
+        if (req.query['identifierColumn']) {
+          identifierColumn = req.query['identifierColumn'] as string;
+        }
         const result = await this.knex
           .table(tableName)
-          .where({ id: req.params.id })
+          .where({ [identifierColumn]: req.params.id })
           .select();
         return res.json({
-          result: result[0],
+          content: result[0],
           message: 'success',
           code: 200000,
         });
       } catch (error) {
         console.error(error);
-        return res.json({ message: error.message, code: 500000 });
+        return res.status(500).json({ message: error.message, code: 500000 });
       }
     };
   };
@@ -90,9 +158,14 @@ class ConversionHelpers {
   deleteOneById = (tableName: string) => {
     return async (req: Request, res: Response) => {
       try {
+        let identifierColumn = 'id';
+        if (req.query['identifierColumn']) {
+          identifierColumn = req.query['identifierColumn'] as string;
+        }
+
         const result = await this.knex
           .table(tableName)
-          .where({ id: req.params.id })
+          .where({ [identifierColumn]: req.params.id })
           .del();
 
         if (result !== 1) {
@@ -103,13 +176,13 @@ class ConversionHelpers {
         }
 
         return res.json({
-          result: req.params.id,
+          content: req.params.id,
           message: 'success',
           code: 200001,
         });
       } catch (error) {
         console.error(error);
-        return res.json({ message: error.message, code: 500000 });
+        return res.status(500).json({ message: error.message, code: 500000 });
       }
     };
   };
@@ -153,9 +226,6 @@ class ConversionHelpers {
             countBaseQuery,
           ).count();
           const offset = itemsPerPage * pageIndex;
-          console.log(itemsPerPage);
-          console.log(pageIndex);
-          console.log(offset);
           const paginationQuery = query.limit(itemsPerPage).offset(offset);
           const count = (await countQuery)[0]['count(*)'];
           const totalPages = Math.ceil(count / itemsPerPage);
@@ -175,10 +245,10 @@ class ConversionHelpers {
         const result = await query;
         return res
           .status(201)
-          .json({ result, message: 'success', code: 200001 });
+          .json({ content: result, message: 'success', code: 200001 });
       } catch (error) {
         console.error(error);
-        return res.json({ message: error.message, code: 500000 });
+        return res.status(500).json({ message: error.message, code: 500000 });
       }
     };
   };

@@ -103,9 +103,9 @@ class Conversion {
         const swaggerGenerator = new SwaggerGenerator(
           {
             contact: {
-              email: 'luis.huertas@metricaandina.com',
-              name: 'USIL',
-              url: 'https://github.com/usil/zero-code-api',
+              email: this.configuration.swaggerEmail,
+              name: this.configuration.swaggerName,
+              url: this.configuration.swaggerUrl,
             },
             title: `Zero Code REST API for ${this.configuration.dataBaseName}`,
             version: '1.0.0',
@@ -128,7 +128,7 @@ class Conversion {
       const tableName = table.table_name;
       this.authRouter.obGet(
         `/${tableName}`,
-        `/${tableName}:select`,
+        `${tableName}:select`,
         this.conversionHelpers.getAll(tableName),
       );
     }
@@ -139,7 +139,7 @@ class Conversion {
       const tableName = table.table_name;
       this.authRouter.obGet(
         `/${tableName}/:id`,
-        `/${tableName}:select`,
+        `${tableName}:select`,
         this.conversionHelpers.getOneById(tableName),
       );
     }
@@ -150,7 +150,7 @@ class Conversion {
       const tableName = table.table_name;
       this.authRouter.obPut(
         `/${tableName}/:id`,
-        `/${tableName}:update`,
+        `${tableName}:update`,
         this.conversionHelpers.updateOneById(tableName),
       );
     }
@@ -159,9 +159,9 @@ class Conversion {
   setDeleteOneByIdEndpoints(tablesList: Table[]) {
     for (const table of tablesList) {
       const tableName = table.table_name;
-      this.authRouter.obPut(
+      this.authRouter.obDelete(
         `/${tableName}/:id`,
-        `/${tableName}:delete`,
+        `${tableName}:delete`,
         this.conversionHelpers.deleteOneById(tableName),
       );
     }
@@ -172,7 +172,7 @@ class Conversion {
       const tableName = table.table_name;
       this.authRouter.obPost(
         `/${tableName}`,
-        `/${tableName}:create`,
+        `${tableName}:create`,
         this.conversionHelpers.create(tableName),
       );
     }
@@ -183,7 +183,7 @@ class Conversion {
       const tableName = table.table_name;
       this.authRouter.obPost(
         `/${tableName}/query`,
-        `/${tableName}:select`,
+        `${tableName}:select`,
         this.conversionHelpers.query(tableName),
       );
     }
