@@ -2,6 +2,7 @@ import http from 'http';
 import ServerInitialization from '../../src/server/ServerInitialization';
 import Route from '../../src/server/util/Route';
 import request from 'supertest';
+import express from 'express';
 
 const testPort = 8081;
 
@@ -16,6 +17,7 @@ describe('Create an express app and an http server', () => {
     jest.spyOn(ServerInitialization.prototype, 'createServer');
     jest.spyOn(ServerInitialization.prototype, 'addKnexjsConfig');
     serverInitialization = new ServerInitialization(testPort);
+    serverInitialization.app = express();
     const routeTest = new Route('/test');
     routeTest.router.get('/', (req, res) => {
       res.sendStatus(200);
@@ -33,7 +35,6 @@ describe('Create an express app and an http server', () => {
   });
 
   it('The app executes all of the necessary functions', () => {
-    expect(serverInitialization.addBasicConfiguration).toHaveBeenCalledTimes(1);
     expect(serverInitialization.addRoutes).toHaveBeenCalledTimes(1);
     expect(serverInitialization.createServer).toHaveBeenCalledTimes(1);
     expect(serverInitialization.addKnexjsConfig).toHaveBeenCalledTimes(1);

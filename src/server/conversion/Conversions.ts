@@ -44,15 +44,6 @@ class Conversion {
     this.knexConfig = knex.client.config;
   }
 
-  getConversionDataBase() {
-    switch (this.knexConfig.client) {
-      case 'mysql2':
-        break;
-      default:
-        break;
-    }
-  }
-
   async generateConversionRouter() {
     try {
       this.conversionHelpers = new ConversionHelpers(this.knex);
@@ -61,7 +52,10 @@ class Conversion {
       this.authRouter = this.oauthBoot.bootOauthExpressRouter(
         this.conversionRouter.router,
       );
-      const mysqlConversion = MysqlConversion(this.knex, this.configuration);
+      const mysqlConversion = new MysqlConversion(
+        this.knex,
+        this.configuration,
+      );
       const [tables, error] = await mysqlConversion.getTables();
       if (error) {
         throw new Error('An error ocurred while reading the database tables');
@@ -76,49 +70,72 @@ class Conversion {
       this.setCreateEndpoints(tables);
       this.setQueryEndpoints(tables);
     } catch (error) {
+      console.log(error);
       throw new Error(error.message);
     }
   }
+
+  setSwaggerMiddleware = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
+    try {
+      let tableColumns: Record<string, Column[]>;
+      let tables: Table[];
+
+      switch (this.knexConfig.client) {
+        case 'mysql2':
+          const mysqlConversion = new MysqlConversion(
+            this.knex,
+            this.configuration,
+          );
+          const [result, error] = await mysqlConversion.getAllTablesColumns();
+          if (error) {
+            return res.status(500).json({
+              code: 500100,
+              message: 'Could not grater data base tables',
+            });
+          }
+          tableColumns = result.tablesColumns;
+          tables = result.tables;
+          break;
+        default:
+          return res
+            .status(500)
+            .json({ code: 500100, message: 'Unsupported data base' });
+      }
+
+      const swaggerGenerator = new SwaggerGenerator(
+        {
+          contact: {
+            email: this.configuration.swaggerEmail,
+            name: this.configuration.swaggerName,
+            url: this.configuration.swaggerUrl,
+          },
+          title: `Zero Code REST API for ${this.configuration.dataBaseName}`,
+          version: '1.0.0',
+          description: `REST endpoints for ${this.configuration.dataBaseName}, that were auto-generated`,
+        },
+        tableColumns,
+        tables,
+        req.protocol + '://' + req.get('host'),
+      );
+      const swaggerDoc = swaggerGenerator.generateJSON();
+      (req as any).swaggerDoc = swaggerDoc;
+      next();
+    } catch (error) {
+      return res
+        .status(500)
+        .json({ code: 500200, message: 'Could no generate swagger' });
+    }
+  };
 
   setSwaggerEndPoint() {
     this.conversionRouter.router.use('/docs', swaggerUI.serve);
     this.conversionRouter.router.get(
       '/docs',
-      async (req: Request, res: Response, next: NextFunction) => {
-        let tableColumns: Record<string, Column[]>;
-        let tables: Table[];
-        switch (this.knexConfig.client) {
-          case 'mysql2':
-            const mysqlConversion = MysqlConversion(
-              this.knex,
-              this.configuration,
-            );
-            await mysqlConversion.getAllTablesColumns();
-            tableColumns = mysqlConversion.tablesColumns;
-            tables = mysqlConversion.tables;
-            break;
-          default:
-            break;
-        }
-        const swaggerGenerator = new SwaggerGenerator(
-          {
-            contact: {
-              email: this.configuration.swaggerEmail,
-              name: this.configuration.swaggerName,
-              url: this.configuration.swaggerUrl,
-            },
-            title: `Zero Code REST API for ${this.configuration.dataBaseName}`,
-            version: '1.0.0',
-            description: `REST endpoints for ${this.configuration.dataBaseName}, that were auto-generated`,
-          },
-          tableColumns,
-          tables,
-          req.protocol + '://' + req.get('host'),
-        );
-        const swaggerDoc = swaggerGenerator.generateJSON();
-        (req as any).swaggerDoc = swaggerDoc;
-        next();
-      },
+      this.setSwaggerMiddleware,
       swaggerUI.setup(),
     );
   }

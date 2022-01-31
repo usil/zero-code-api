@@ -43,11 +43,7 @@ class ConversionHelpers {
           pageIndex = parseInt(req.query['pageIndex'] as string);
         }
 
-        if (
-          req.query['orderType'] &&
-          (req.query['orderType'] === 'desc' ||
-            req.query['orderType'] === 'asc')
-        ) {
+        if (req.query['orderType'] && req.query['orderType'] === 'desc') {
           orderType = req.query['orderType'] as string;
         }
 
@@ -70,7 +66,7 @@ class ConversionHelpers {
           .offset(offset)
           .orderBy(orderByColumn, orderType);
 
-        return res.status(201).json({
+        return res.status(200).json({
           content: {
             items: result,
             pageIndex,
@@ -79,7 +75,7 @@ class ConversionHelpers {
             totalPages,
           },
           message: 'success',
-          code: 200001,
+          code: 200000,
         });
       } catch (error) {
         console.error(error);
@@ -98,7 +94,7 @@ class ConversionHelpers {
           message: 'success',
           code: 200001,
         };
-        if ([...req.body.inserts].length === 0) {
+        if ([...req.body.inserts].length === 1) {
           responseObj.content = result;
         }
         return res.status(201).json(responseObj);
@@ -120,7 +116,7 @@ class ConversionHelpers {
           .table(tableName)
           .where({ [identifierColumn]: req.params.id })
           .update(req.body, []);
-        return res.json({
+        return res.status(201).json({
           content: result[0],
           message: 'success',
           code: 200001,
@@ -141,9 +137,9 @@ class ConversionHelpers {
         }
         const result = await this.knex
           .table(tableName)
-          .where({ [identifierColumn]: req.params.id })
-          .select();
-        return res.json({
+          .select()
+          .where({ [identifierColumn]: req.params.id });
+        return res.status(200).json({
           content: result[0],
           message: 'success',
           code: 200000,
@@ -175,7 +171,7 @@ class ConversionHelpers {
           });
         }
 
-        return res.json({
+        return res.status(201).json({
           content: req.params.id,
           message: 'success',
           code: 200001,
@@ -230,7 +226,7 @@ class ConversionHelpers {
           const count = (await countQuery)[0]['count(*)'];
           const totalPages = Math.ceil(count / itemsPerPage);
           const result = await paginationQuery;
-          return res.status(201).json({
+          return res.status(200).json({
             content: {
               items: result,
               pageIndex,
@@ -239,12 +235,13 @@ class ConversionHelpers {
               totalPages,
             },
             message: 'success',
-            code: 200001,
+            code: 200000,
           });
         }
+
         const result = await query;
         return res
-          .status(201)
+          .status(200)
           .json({ content: result, message: 'success', code: 200001 });
       } catch (error) {
         console.error(error);
@@ -253,7 +250,7 @@ class ConversionHelpers {
     };
   };
 
-  private createFilter = (filters: Filter[], queryBase: Knex.QueryBuilder) => {
+  createFilter = (filters: Filter[], queryBase: Knex.QueryBuilder) => {
     let query = queryBase;
     for (const filter of filters) {
       const baseWhereQuery = filter.operator === 'and' ? 'where' : 'orWhere';
@@ -267,7 +264,6 @@ class ConversionHelpers {
         case '<=':
         case '>=':
         case '<>':
-        case '<':
           query = query[
             whereQuery as 'orWhere' | 'where' | 'whereNot' | 'orWhereNot'
           ](filter.column, filter.operation, filter.value);

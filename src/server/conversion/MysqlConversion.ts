@@ -29,7 +29,6 @@ interface Column {
 }
 
 class MySqlConversion {
-  private static _instance: MySqlConversion;
   knex: Knex;
   configuration: Partial<ConfigGlobalDto>;
   tables: Table[];
@@ -54,7 +53,6 @@ class MySqlConversion {
       const tables = tablesPreParse[0] as Table[];
       return [tables, null];
     } catch (error) {
-      console.error(error);
       return [null, error.message];
     }
   }
@@ -69,7 +67,6 @@ class MySqlConversion {
       const table = tablesPreParse[0] as Table[];
       return [table[0], null];
     } catch (error) {
-      console.error(error);
       return [null, error.message];
     }
   }
@@ -97,7 +94,7 @@ class MySqlConversion {
     }
   }
 
-  private async getTableColumns(
+  async getTableColumns(
     table: Table,
   ): Promise<[Column[], null] | [null, string]> {
     try {
@@ -138,7 +135,8 @@ class MySqlConversion {
   }
 
   async getAllTablesColumns(): Promise<
-    [Record<string, Column[]>, null] | [null, string]
+    | [{ tables: Table[]; tablesColumns: Record<string, Column[]> }, null]
+    | [null, string]
   > {
     try {
       const [localTables, error] = await this.getTables();
@@ -151,19 +149,12 @@ class MySqlConversion {
         tablesColumns[table.table_name] = columns;
       }
       this.tablesColumns = tablesColumns;
-      return [tablesColumns, null];
+      return [{ tables: this.tables, tablesColumns: this.tablesColumns }, null];
     } catch (error) {
-      console.error(error);
+      console.log(error);
       return [null, error.message];
     }
   }
-
-  public static Instance(knex: Knex, configuration: Partial<ConfigGlobalDto>) {
-    return (
-      MySqlConversion._instance ||
-      (MySqlConversion._instance = new MySqlConversion(knex, configuration))
-    );
-  }
 }
 
-export default MySqlConversion.Instance;
+export default MySqlConversion;

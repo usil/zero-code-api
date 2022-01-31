@@ -1,5 +1,10 @@
 # zero-code-api 0.0.1-pre-alpha
 
+<img src="./coverage/badge-branches.svg">
+<img src="./coverage/badge-functions.svg">
+<img src="./coverage/badge-lines.svg">
+<img src="./coverage/badge-statements.svg">
+
 Zero Code Api is low code platform to expose mysql database as a Restful Api wih endpoints ready to use. This is an alternative to these tools `strapi, nocodb, xmysql, dreamfactory, deployd`.
 
 ## Features

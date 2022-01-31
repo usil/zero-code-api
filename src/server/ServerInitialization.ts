@@ -45,7 +45,7 @@ class ServerInitialization
 
   async init() {
     try {
-      const mysqlConversion = MysqlConversion(
+      const mysqlConversion = new MysqlConversion(
         this.knexPool,
         this.configuration,
       );
