@@ -2,6 +2,7 @@ import { ConfigGlobalDto } from '../../../config/config.dto';
 import { Request, Response } from 'express';
 import { Knex } from 'knex';
 import MysqlConversion from './MysqlConversion';
+import tableSettings from '../../tableSettings';
 
 class GeneralHelpers {
   knex: Knex;
@@ -40,6 +41,17 @@ class GeneralHelpers {
       const [fullTable, error] = await mysqlConversion.getFullTable(tableName);
       if (error) {
         return res.status(500).json({ message: error, code: 500000 });
+      }
+      const columnsToSelect = tableSettings[tableName] || [];
+      if (columnsToSelect.length > 0) {
+        const newColumns = [];
+        for (const column of fullTable.columns) {
+          const columnIndex = columnsToSelect.indexOf(column.column_name);
+          if (columnIndex > -1) {
+            newColumns.push(column);
+          }
+          fullTable.columns = [...newColumns];
+        }
       }
       return res
         .status(200)

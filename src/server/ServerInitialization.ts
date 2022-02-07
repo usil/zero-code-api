@@ -61,6 +61,7 @@ class ServerInitialization
         this.baseExpressApp,
         this.knexAuthDataBase,
         this.configuration.jwtSecret,
+        this.configuration.cryptoKey,
         parsedTables,
       );
 
