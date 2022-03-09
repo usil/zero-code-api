@@ -63,6 +63,8 @@ class ServerInitialization
         this.configuration.jwtSecret,
         this.configuration.cryptoKey,
         parsedTables,
+        'zero_code_api',
+        '::usil.zc.app',
       );
 
       this.app = oauthBoot.expressSecured;
