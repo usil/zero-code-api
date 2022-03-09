@@ -1,6 +1,6 @@
 {
   "name": "zero-code",
-  "version": "0.0.2",
+  "version": "0.0.32",
   "description": "Zero code api",
   "main": "./dist/main.js",
   "scripts": {
