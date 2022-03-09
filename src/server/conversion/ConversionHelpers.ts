@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { Knex } from 'knex';
+import tableSettings from '../../tableSettings';
 
 class QueryBody {
   filters: Filter[];
@@ -59,9 +60,11 @@ class ConversionHelpers {
 
         const totalPages = Math.ceil(totalCount / itemsPerPage);
 
+        const columnsToSelect = tableSettings[tableName] || [];
+
         const result = await this.knex
           .table(tableName)
-          .select()
+          .select(...columnsToSelect)
           .limit(itemsPerPage)
           .offset(offset)
           .orderBy(orderByColumn, orderType);
@@ -135,9 +138,10 @@ class ConversionHelpers {
         if (req.query['identifierColumn']) {
           identifierColumn = req.query['identifierColumn'] as string;
         }
+        const columnToSelect = tableSettings[tableName] || [];
         const result = await this.knex
           .table(tableName)
-          .select()
+          .select(...columnToSelect)
           .where({ [identifierColumn]: req.params.id });
         return res.status(200).json({
           content: result[0],
@@ -208,15 +212,35 @@ class ConversionHelpers {
         }
 
         const parsedBody = req.body as QueryBody;
-        const baseQuery = this.knex
-          .table(tableName)
-          .select(...(parsedBody.fields || []));
+
+        let columnsToSelect = [] as string[];
+
+        const columnsToSelectBySettings = tableSettings[tableName] || [];
+        const columnsToSelectByQuery = parsedBody.fields || [];
+
+        if (columnsToSelectByQuery.length === 0) {
+          columnsToSelect = [...columnsToSelectBySettings];
+        } else if (columnsToSelectBySettings.length > 0) {
+          for (const column of columnsToSelectByQuery) {
+            const indexOfColumn = columnsToSelectBySettings.indexOf(column);
+            if (indexOfColumn > -1) {
+              columnsToSelect.push(column);
+            }
+          }
+          if (columnsToSelect.length === 0) {
+            columnsToSelect = [...columnsToSelectBySettings];
+          }
+        } else {
+          columnsToSelect = [...columnsToSelectByQuery];
+        }
+
+        const baseQuery = this.knex.table(tableName).select(...columnsToSelect);
         const query = this.createFilter(parsedBody.filters || [], baseQuery);
 
         if (pagination) {
           const countBaseQuery = this.knex
             .table(tableName)
-            .select(...(parsedBody.fields || []));
+            .select(...columnsToSelect);
           const countQuery = this.createFilter(
             parsedBody.filters || [],
             countBaseQuery,

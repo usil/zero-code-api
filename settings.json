@@ -10,5 +10,6 @@
   "swaggerEmail": "${SWAGGER_EMAIL}",
   "swaggerName": "${SWAGGER_NAME}",
   "swaggerUrl": "${SWAGGER_URL}",
+  "cryptoKey": "${CRYPTO_KEY}",
   "occultSystemTables": true
 }

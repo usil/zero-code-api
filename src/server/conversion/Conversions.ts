@@ -51,6 +51,7 @@ class Conversion {
       this.conversionRouter = new Route('/api');
       this.authRouter = this.oauthBoot.bootOauthExpressRouter(
         this.conversionRouter.router,
+        '/api',
       );
       const mysqlConversion = new MysqlConversion(
         this.knex,
