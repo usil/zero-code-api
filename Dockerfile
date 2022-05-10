@@ -8,6 +8,6 @@ COPY . ./
 
 RUN npm run build
 
-EXPOSE 2110
-ENV PORT 2110
+EXPOSE 2111
+ENV PORT 2111
 ENTRYPOINT ["npm","run","start"]
