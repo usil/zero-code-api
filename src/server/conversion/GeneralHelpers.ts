@@ -13,7 +13,7 @@ class GeneralHelpers {
     this.configuration = configuration;
   }
 
-  getAllTables = async (req: Request, res: Response) => {
+  getAllTables = async (_req: Request, res: Response) => {
     try {
       const mysqlConversion = new MysqlConversion(
         this.knex,

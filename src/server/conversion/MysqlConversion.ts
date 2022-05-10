@@ -53,6 +53,7 @@ class MySqlConversion {
       const tables = tablesPreParse[0] as Table[];
       return [tables, null];
     } catch (error) {
+      this.configuration.log().error(error.message);
       return [null, error.message];
     }
   }
