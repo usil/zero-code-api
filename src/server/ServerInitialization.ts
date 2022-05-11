@@ -1,5 +1,5 @@
 import compression from 'compression';
-import express, { Application, NextFunction, Request, Response } from 'express';
+import express, { Application, Request, Response } from 'express';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import cors from 'cors';
@@ -28,7 +28,6 @@ class ServerInitialization
   port: number;
   routes: string[] = [];
   knexPool: Knex;
-  knexAuthDataBase: Knex;
   configuration = getConfig();
 
   /**
@@ -59,7 +58,7 @@ class ServerInitialization
 
       const oauthBoot = new OauthBoot(
         this.baseExpressApp,
-        this.knexAuthDataBase,
+        this.knexPool,
         this.configuration.jwtSecret,
         this.configuration.cryptoKey,
         parsedTables,
@@ -77,7 +76,6 @@ class ServerInitialization
 
       await this.exposeDataBase(oauthBoot);
     } catch (error) {
-      console.log(error);
       throw new Error('An error ocurred while creating the server');
     }
   }
@@ -87,19 +85,6 @@ class ServerInitialization
    */
   addKnexjsConfig(): void {
     this.knexPool = knex({
-      client: 'mysql2',
-      version: '5.7',
-      connection: {
-        host: this.configuration.dataBaseHost,
-        port: this.configuration.dataBasePort,
-        user: this.configuration.dataBaseUser,
-        password: this.configuration.dataBasePassword,
-        database: this.configuration.dataBaseName,
-      },
-      pool: { min: 0, max: 5 },
-    });
-
-    this.knexAuthDataBase = knex({
       client: 'mysql2',
       version: '5.7',
       connection: {
@@ -129,6 +114,11 @@ class ServerInitialization
     this.app.use(morgan(':method :url'));
     this.app.use(express.json());
     this.app.use(express.urlencoded({ extended: true }));
+    this.app.obGet('/', ':', this.healthEndpoint);
+  }
+
+  healthEndpoint(_req: Request, res: Response) {
+    return res.status(200).send('Ok');
   }
 
   /**
