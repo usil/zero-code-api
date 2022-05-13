@@ -7,14 +7,14 @@ interface Table {
   table_schema: string;
 }
 
-interface FullTable {
+export interface FullTable {
   table_name: string;
   table_comment?: string;
   table_schema: string;
   columns: Column[];
 }
 
-interface Column {
+export interface Column {
   column_name: string;
   column_default: string;
   is_nullable: string;

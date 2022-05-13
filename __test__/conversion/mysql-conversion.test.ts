@@ -83,9 +83,16 @@ describe('Description', () => {
       },
     } as any as Knex;
 
+    const errorLogMock = jest.fn();
+
     const configuration = {
       dataBaseName: 'test',
       occultSystemTables: true,
+      log: () => {
+        return {
+          error: errorLogMock,
+        };
+      },
     } as any;
 
     let sqlStatement = `SELECT table_name, table_comment, table_schema 

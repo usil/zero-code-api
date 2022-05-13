@@ -53,10 +53,9 @@ class SwaggerGenerator {
   }
 
   createTags(tables: Table[]) {
-    const tags = tables.map((t) => {
+    return tables.map((t) => {
       return { name: t.table_name, description: t.table_comment };
     });
-    return tags;
   }
 
   createPaths(tablesColumns: Record<string, Column[]>) {
@@ -518,7 +517,7 @@ class SwaggerGenerator {
     const tags = this.createTags(this.tables);
     const paths = this.createPaths(this.tablesColumns);
     const schemas = this.createSchemas(this.tablesColumns);
-    const baseSwaggerJson = {
+    return {
       openapi: this.openApiVersion,
       info: this.info,
       servers: [{ url: this.host }],
@@ -540,7 +539,6 @@ class SwaggerGenerator {
         },
       },
     };
-    return baseSwaggerJson;
   }
 }
 

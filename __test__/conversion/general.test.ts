@@ -41,6 +41,33 @@ describe('General helpers works', () => {
     });
   });
 
+  it('Columns to select', () => {
+    const knex = {} as any as Knex;
+    const configuration = {} as any;
+
+    const generalHelpers = new GeneralHelpers(knex, configuration);
+
+    const localTableSettings = {
+      table: ['id'],
+    };
+
+    const fullTable = {
+      columns: [
+        {
+          column_name: 'id',
+        },
+      ],
+    } as any;
+
+    const columnsToSelect = generalHelpers.columnsToSelect(
+      'table',
+      localTableSettings,
+      fullTable,
+    );
+
+    expect(columnsToSelect[0].column_name).toBe('id');
+  });
+
   it('Get all tables fails', async () => {
     const knex = {} as any as Knex;
     const configuration = {} as any;
@@ -89,6 +116,7 @@ describe('General helpers works', () => {
       .spyOn(MysqlConversion.prototype, 'getFullTable')
       .mockResolvedValue([
         {
+          columns: ['id'],
           table_name: 'table',
           table_comment: 'comment',
           table_schema: 'schema',
@@ -103,6 +131,7 @@ describe('General helpers works', () => {
       message: 'Table selected',
       code: 200000,
       content: {
+        columns: ['id'],
         table_name: 'table',
         table_comment: 'comment',
         table_schema: 'schema',

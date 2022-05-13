@@ -71,7 +71,7 @@ class Conversion {
       this.setCreateEndpoints(tables);
       this.setQueryEndpoints(tables);
     } catch (error) {
-      console.log(error);
+      this.configuration.log().error(error.message);
       throw new Error(error.message);
     }
   }

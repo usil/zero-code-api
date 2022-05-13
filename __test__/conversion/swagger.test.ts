@@ -36,6 +36,16 @@ describe('Swagger created correctly', () => {
         column_comment: 'string',
         column_key: 'string',
       },
+      {
+        column_name: 'string',
+        column_default: 'string',
+        is_nullable: 'NO',
+        data_type: 'string',
+        column_type: 'string',
+        extra: 'string',
+        column_comment: 'string',
+        column_key: 'string',
+      },
     ],
   };
 
@@ -76,6 +86,56 @@ describe('Swagger created correctly', () => {
     );
     const schemas = swaggerGenerator.createSchemas(tableColumns);
     expect(schemas['table']).toBeTruthy();
+    expect(schemas['table'].required.length).toBe(1);
     expect(schemas['table_query']).toBeTruthy();
+    expect(schemas['table_query']).toBeTruthy();
+  });
+
+  it('Generates correct json', () => {
+    const swaggerGenerator = new SwaggerGenerator(
+      info,
+      tableColumns,
+      tables,
+      host,
+      openApiVersion,
+    );
+    swaggerGenerator.createTags = jest.fn().mockReturnValue({
+      tag: true,
+    });
+
+    swaggerGenerator.createPaths = jest.fn().mockReturnValue({
+      path: true,
+    });
+
+    swaggerGenerator.createSchemas = jest.fn().mockReturnValue({
+      schema: true,
+    });
+
+    const jsonGenerated = swaggerGenerator.generateJSON();
+
+    expect(jsonGenerated.paths).toStrictEqual({
+      path: true,
+    });
+
+    expect(jsonGenerated.tags).toStrictEqual({
+      tag: true,
+    });
+
+    expect(jsonGenerated.components.schemas).toStrictEqual({
+      schema: true,
+    });
+  });
+
+  it('Creates with default open ai version', () => {
+    const swaggerGenerator = new SwaggerGenerator(
+      info,
+      tableColumns,
+      tables,
+      host,
+    );
+
+    const generatedJson = swaggerGenerator.generateJSON();
+
+    expect(generatedJson.openapi).toBe('3.0.2');
   });
 });

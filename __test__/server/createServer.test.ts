@@ -1,25 +1,23 @@
 import { newServer } from '../../src/server/createServer';
-import { Server } from 'http';
+import ServerInitialization from '../../src/server/ServerInitialization';
 
 describe('Correct app creation', () => {
-  let server: Server;
-  let expressApp: any;
+  it('Creates an instance of an express app', async () => {
+    const initMock = jest
+      .spyOn(ServerInitialization.prototype, 'init')
+      .mockImplementation(() => {
+        return true as any;
+      });
 
-  beforeAll(async () => {
-    const serverFull = await newServer(8083);
-    server = serverFull.server;
-    expressApp = serverFull.app;
-  });
+    const createServerMock = jest
+      .spyOn(ServerInitialization.prototype, 'createServer')
+      .mockImplementation(() => {
+        return true as any;
+      });
 
-  it('Creates an instance of an express app', () => {
-    expect(expressApp.name).toBe('app');
-  });
+    await newServer(8083);
 
-  it('Creates an instance of an http server', () => {
-    expect(server).toBeInstanceOf(Server);
-  });
-
-  beforeAll(() => {
-    server.close();
+    expect(initMock).toHaveBeenCalled();
+    expect(createServerMock).toHaveBeenCalled();
   });
 });

@@ -1,7 +1,7 @@
 import { ConfigGlobalDto } from '../../../config/config.dto';
 import { Request, Response } from 'express';
 import { Knex } from 'knex';
-import MysqlConversion from './MysqlConversion';
+import MysqlConversion, { Column, FullTable } from './MysqlConversion';
 import tableSettings from '../../tableSettings';
 
 class GeneralHelpers {
@@ -31,6 +31,27 @@ class GeneralHelpers {
     }
   };
 
+  columnsToSelect = (
+    tableName: string,
+    localTableSettings: Record<string, string[]>,
+    fullTable: FullTable,
+  ): Column[] => {
+    const columnsToSelect = localTableSettings[tableName] || [];
+
+    if (columnsToSelect.length === 0) {
+      return fullTable.columns;
+    }
+
+    const newColumns = [];
+
+    for (const column of fullTable.columns) {
+      const columnIndex = columnsToSelect.indexOf(column.column_name);
+      if (columnIndex > -1) newColumns.push(column);
+    }
+
+    return newColumns;
+  };
+
   getFullTable = async (req: Request, res: Response) => {
     try {
       const tableName = req.params.tableName;
@@ -42,17 +63,13 @@ class GeneralHelpers {
       if (error) {
         return res.status(500).json({ message: error, code: 500000 });
       }
-      const columnsToSelect = tableSettings[tableName] || [];
-      if (columnsToSelect.length > 0) {
-        const newColumns = [];
-        for (const column of fullTable.columns) {
-          const columnIndex = columnsToSelect.indexOf(column.column_name);
-          if (columnIndex > -1) {
-            newColumns.push(column);
-          }
-          fullTable.columns = [...newColumns];
-        }
-      }
+
+      fullTable.columns = this.columnsToSelect(
+        tableName,
+        tableSettings,
+        fullTable,
+      );
+
       return res
         .status(200)
         .json({ message: 'Table selected', code: 200000, content: fullTable });
