@@ -515,6 +515,50 @@ describe('All conversion helper functions works', () => {
     });
   });
 
+  it('Columns to select works', () => {
+    const parsedBody = {
+      fields: ['id'],
+    } as any;
+
+    const localTableSettings = {
+      table: ['id', 'xid'],
+    };
+
+    const knex = {} as any as Knex;
+
+    const conversionHelpers = new ConversionHelpers(knex);
+
+    const columns = conversionHelpers.columnsToSelect(
+      'table',
+      localTableSettings,
+      parsedBody,
+    );
+
+    expect(columns[0]).toBe('id');
+  });
+
+  it('Columns to select works, no correct query columns', () => {
+    const parsedBody = {
+      fields: ['uid'],
+    } as any;
+
+    const localTableSettings = {
+      table: ['id', 'xid'],
+    };
+
+    const knex = {} as any as Knex;
+
+    const conversionHelpers = new ConversionHelpers(knex);
+
+    const columns = conversionHelpers.columnsToSelect(
+      'table',
+      localTableSettings,
+      parsedBody,
+    );
+
+    expect(columns[0]).toBe('id');
+  });
+
   it('Query works pagination', async () => {
     const knex = {
       table: jest.fn().mockReturnThis(),
@@ -541,6 +585,59 @@ describe('All conversion helper functions works', () => {
             operator: 'and',
           },
         ],
+      },
+      params: {
+        id: 1,
+      },
+    } as any as Request;
+
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    } as any as Response;
+
+    const conversionHelpers = new ConversionHelpers(knex);
+
+    conversionHelpers.createFilter = jest.fn().mockReturnValue(knex);
+
+    await conversionHelpers.query('table')(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith({
+      content: {
+        items: [{ id: 1 }],
+        pageIndex: 1,
+        itemsPerPage: 10,
+        totalItems: 1,
+        totalPages: 1,
+      },
+      message: 'success',
+      code: 200000,
+    });
+    expect(knex.table).toHaveBeenCalledWith('table');
+    expect(knex.select).toBeCalledWith('id');
+    expect(knex.limit).toHaveBeenCalledWith(10);
+    expect(knex.offset).toHaveBeenCalledWith(10);
+    expect(conversionHelpers.createFilter).toHaveBeenCalledTimes(2);
+  });
+
+  it('Query works pagination, no filters', async () => {
+    const knex = {
+      table: jest.fn().mockReturnThis(),
+      select: jest.fn().mockReturnThis(),
+      limit: jest.fn().mockReturnThis(),
+      offset: jest.fn().mockResolvedValue([{ id: 1 }]),
+      where: jest.fn().mockReturnThis(),
+      count: jest.fn().mockResolvedValue([{ 'count(*)': 1 }]),
+    } as any as Knex;
+
+    const req = {
+      query: {
+        itemsPerPage: 10,
+        pageIndex: 1,
+      },
+      body: {
+        fields: ['id'],
       },
       params: {
         id: 1,

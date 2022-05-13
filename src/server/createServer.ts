@@ -1,3 +1,4 @@
+import { getConfig } from './../../config/main.config';
 import ServerInitialization from './ServerInitialization';
 
 /**

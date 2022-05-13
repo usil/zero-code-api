@@ -54,6 +54,7 @@ class ServerInitialization
       if (error) {
         throw new Error('An error ocurred while reading the database tables');
       }
+
       const parsedTables = tables.map((t) => t.table_name);
 
       const oauthBoot = new OauthBoot(
@@ -74,9 +75,11 @@ class ServerInitialization
 
       await oauthBoot.init();
 
-      await this.exposeDataBase(oauthBoot);
+      await this.exposeDataBase(oauthBoot, this.knexPool);
     } catch (error) {
-      throw new Error('An error ocurred while creating the server');
+      this.configuration
+        .log()
+        .error(`An error ocurred while creating the server, ${error.message}`);
     }
   }
 
@@ -98,8 +101,8 @@ class ServerInitialization
     });
   }
 
-  async exposeDataBase(oauthBoot: any) {
-    const conversion = new Conversion(this.knexPool, oauthBoot);
+  async exposeDataBase(oauthBoot: any, knexPool: Knex) {
+    const conversion = new Conversion(knexPool, oauthBoot);
     await conversion.generateConversionRouter();
     this.addRoutes(conversion.conversionRouter);
   }

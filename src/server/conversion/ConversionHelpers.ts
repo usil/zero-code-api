@@ -187,6 +187,35 @@ class ConversionHelpers {
     };
   };
 
+  columnsToSelect = (
+    tableName: string,
+    localTableSettings: Record<string, string[]>,
+    parsedBody: QueryBody,
+  ) => {
+    let columnsToSelect = [] as string[];
+
+    const columnsToSelectBySettings = localTableSettings[tableName] || [];
+    const columnsToSelectByQuery = parsedBody.fields || [];
+
+    if (columnsToSelectByQuery.length === 0) {
+      columnsToSelect = [...columnsToSelectBySettings];
+    } else if (columnsToSelectBySettings.length > 0) {
+      for (const column of columnsToSelectByQuery) {
+        const indexOfColumn = columnsToSelectBySettings.indexOf(column);
+        if (indexOfColumn > -1) {
+          columnsToSelect.push(column);
+        }
+      }
+      if (columnsToSelect.length === 0) {
+        columnsToSelect = [...columnsToSelectBySettings];
+      }
+    } else {
+      columnsToSelect = [...columnsToSelectByQuery];
+    }
+
+    return columnsToSelect;
+  };
+
   query = (tableName: string) => {
     return async (req: Request, res: Response) => {
       try {
@@ -213,28 +242,14 @@ class ConversionHelpers {
 
         const parsedBody = req.body as QueryBody;
 
-        let columnsToSelect = [] as string[];
-
-        const columnsToSelectBySettings = tableSettings[tableName] || [];
-        const columnsToSelectByQuery = parsedBody.fields || [];
-
-        if (columnsToSelectByQuery.length === 0) {
-          columnsToSelect = [...columnsToSelectBySettings];
-        } else if (columnsToSelectBySettings.length > 0) {
-          for (const column of columnsToSelectByQuery) {
-            const indexOfColumn = columnsToSelectBySettings.indexOf(column);
-            if (indexOfColumn > -1) {
-              columnsToSelect.push(column);
-            }
-          }
-          if (columnsToSelect.length === 0) {
-            columnsToSelect = [...columnsToSelectBySettings];
-          }
-        } else {
-          columnsToSelect = [...columnsToSelectByQuery];
-        }
+        const columnsToSelect = this.columnsToSelect(
+          tableName,
+          tableSettings,
+          parsedBody,
+        );
 
         const baseQuery = this.knex.table(tableName).select(...columnsToSelect);
+
         const query = this.createFilter(parsedBody.filters || [], baseQuery);
 
         if (pagination) {
@@ -249,10 +264,10 @@ class ConversionHelpers {
           const paginationQuery = query.limit(itemsPerPage).offset(offset);
           const count = (await countQuery)[0]['count(*)'];
           const totalPages = Math.ceil(count / itemsPerPage);
-          const result = await paginationQuery;
+          const itemsResult = await paginationQuery;
           return res.status(200).json({
             content: {
-              items: result,
+              items: itemsResult,
               pageIndex,
               itemsPerPage,
               totalItems: count,

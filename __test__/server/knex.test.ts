@@ -1,6 +1,6 @@
 import ServerInitialization from '../../src/server/ServerInitialization';
 
-describe('Example routes works accordingly', () => {
+describe.skip('Knex works accordingly', () => {
   let serverInitialization: ServerInitialization;
 
   beforeAll(() => {
