@@ -25,7 +25,7 @@
     "knex": "^2.0.0",
     "morgan": "^1.10.0",
     "mysql2": "^2.3.3",
-    "nodeboot-oauth2-starter": "git+https://github.com/usil/nodeboot-oauth2-starter.git",
+    "nodeboot-oauth2-starter": "git+https://github.com/usil/nodeboot-oauth2-starter.git#fix-validator-middleware",
     "swagger-ui-express": "^4.3.0",
     "throng": "^5.0.0",
     "tslib": "^2.4.0"

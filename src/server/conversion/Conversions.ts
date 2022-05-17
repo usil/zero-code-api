@@ -64,6 +64,7 @@ class Conversion {
       this.setSwaggerEndPoint();
       this.setGetTablesList();
       this.setGetFullTable();
+      this.setRefreshEndpoint();
       this.setGetALLEndpoints(tables);
       this.setGetOneByIdEndpoints(tables);
       this.setGetUpdateByIdEndpoints(tables);
@@ -75,6 +76,43 @@ class Conversion {
       throw new Error(error.message);
     }
   }
+
+  setRefreshEndpoint = () => {
+    console.log('refresh');
+    this.authRouter.obPost(
+      `/zero-code/refresh`,
+      `OAUTH2_global:*`,
+      this.refreshEndpoints,
+    );
+  };
+
+  refreshEndpoints = async (_req: Request, res: Response) => {
+    try {
+      const mysqlConversion = new MysqlConversion(
+        this.knex,
+        this.configuration,
+      );
+      const [tables, error] = await mysqlConversion.getTables();
+      if (error) {
+        throw new Error(
+          `An error ocurred while reading the database tables; ${error}`,
+        );
+      }
+      this.setGetALLEndpoints(tables);
+      this.setGetOneByIdEndpoints(tables);
+      this.setGetUpdateByIdEndpoints(tables);
+      this.setDeleteOneByIdEndpoints(tables);
+      this.setCreateEndpoints(tables);
+      this.setQueryEndpoints(tables);
+      return res.json({ message: 'Endpoints refreshed', code: 200000 });
+    } catch (error) {
+      this.configuration.log().error(error.message);
+      return res.status(500).json({
+        code: 500200,
+        message: `Could no refresh endpoints; ${error.message}`,
+      });
+    }
+  };
 
   setSwaggerMiddleware = async (
     req: Request,
