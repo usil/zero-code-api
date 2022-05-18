@@ -520,7 +520,10 @@ class SwaggerGenerator {
     return {
       openapi: this.openApiVersion,
       info: this.info,
-      servers: [{ url: this.host }],
+      servers: [
+        { url: 'http://' + this.host },
+        { url: 'https://' + this.host },
+      ],
       tags,
       paths,
       components: {

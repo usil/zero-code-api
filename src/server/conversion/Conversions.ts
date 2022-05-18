@@ -158,7 +158,7 @@ class Conversion {
         },
         tableColumns,
         tables,
-        req.protocol + '://' + req.get('host'),
+        req.get('host'),
       );
       const swaggerDoc = swaggerGenerator.generateJSON();
       (req as any).swaggerDoc = swaggerDoc;
