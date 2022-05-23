@@ -47,6 +47,8 @@ First put the following env variables.
 | `SWAGGER_EMAIL`      | The email to show in the swagger docs  |
 | `SWAGGER_URL`        | A page url to show in the swagger docs |
 | `SWAGGER_NAME`       | The name to show in the swagger docs   |
+| USE_FILE             | Use a file for the logs                |
+| LOG_LEVEL            | Set the logger level                   |
 
 ### Usage For Development
 
