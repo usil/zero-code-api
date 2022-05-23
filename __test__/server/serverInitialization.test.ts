@@ -116,6 +116,29 @@ describe('Create an express app and an http server', () => {
     expect(res.send).toHaveBeenCalledWith('Ok');
   });
 
+  it('Test error handle', () => {
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    };
+    serverInitialization.errorHandle(
+      {
+        message: 'some error',
+      },
+      {} as any,
+      res as any,
+      jest.fn(),
+    );
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: 'some error',
+        code: 500000,
+      }),
+    );
+  });
+
   afterAll(() => {
     serverInitialization.server.close();
   });

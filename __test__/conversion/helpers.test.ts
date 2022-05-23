@@ -29,7 +29,11 @@ describe('All conversion helper functions works', () => {
 
     const conversionHelpers = new ConversionHelpers(knex);
 
-    await conversionHelpers.getAll('table')(req, res);
+    conversionHelpers.returnError = jest.fn();
+
+    const mockNext = jest.fn();
+
+    await conversionHelpers.getAll('table')(req, res, mockNext);
 
     expect(res.status).toHaveBeenCalledWith(200);
     expect(knex.table).toHaveBeenCalledWith('table');
@@ -69,7 +73,11 @@ describe('All conversion helper functions works', () => {
 
     const conversionHelpers = new ConversionHelpers(knex);
 
-    await conversionHelpers.getAll('table')(req, res);
+    conversionHelpers.returnError = jest.fn();
+
+    const mockNext = jest.fn();
+
+    await conversionHelpers.getAll('table')(req, res, mockNext);
 
     expect(res.status).toHaveBeenCalledWith(200);
     expect(knex.table).toHaveBeenCalledWith('table');
@@ -109,9 +117,13 @@ describe('All conversion helper functions works', () => {
 
     const conversionHelpers = new ConversionHelpers(knex);
 
-    await conversionHelpers.getAll('table')(req, res);
+    conversionHelpers.returnError = jest.fn();
 
-    expect(res.status).toHaveBeenCalledWith(500);
+    const mockNext = jest.fn();
+
+    await conversionHelpers.getAll('table')(req, res, mockNext);
+
+    expect(conversionHelpers.returnError).toHaveBeenCalled();
   });
 
   it('Create works', async () => {
@@ -133,7 +145,11 @@ describe('All conversion helper functions works', () => {
 
     const conversionHelpers = new ConversionHelpers(knex);
 
-    await conversionHelpers.create('table')(req, res);
+    conversionHelpers.returnError = jest.fn();
+
+    const mockNext = jest.fn();
+
+    await conversionHelpers.create('table')(req, res, mockNext);
 
     expect(res.status).toHaveBeenCalledWith(201);
     expect(res.json).toHaveBeenCalledWith({
@@ -162,7 +178,11 @@ describe('All conversion helper functions works', () => {
 
     const conversionHelpers = new ConversionHelpers(knex);
 
-    await conversionHelpers.create('table')(req, res);
+    conversionHelpers.returnError = jest.fn();
+
+    const mockNext = jest.fn();
+
+    await conversionHelpers.create('table')(req, res, mockNext);
 
     expect(res.status).toHaveBeenCalledWith(201);
     expect(res.json).toHaveBeenCalledWith({
@@ -190,9 +210,13 @@ describe('All conversion helper functions works', () => {
 
     const conversionHelpers = new ConversionHelpers(knex);
 
-    await conversionHelpers.create('table')(req, res);
+    conversionHelpers.returnError = jest.fn();
 
-    expect(res.status).toHaveBeenCalledWith(500);
+    const mockNext = jest.fn();
+
+    await conversionHelpers.create('table')(req, res, mockNext);
+
+    expect(conversionHelpers.returnError).toHaveBeenCalled();
   });
 
   it('Update one by id works', async () => {
@@ -218,7 +242,11 @@ describe('All conversion helper functions works', () => {
 
     const conversionHelpers = new ConversionHelpers(knex);
 
-    await conversionHelpers.updateOneById('table')(req, res);
+    conversionHelpers.returnError = jest.fn();
+
+    const mockNext = jest.fn();
+
+    await conversionHelpers.updateOneById('table')(req, res, mockNext);
 
     expect(knex.where).toHaveBeenCalledWith({ other_id: 1 });
     expect(knex.table).toHaveBeenCalledWith('table');
@@ -251,7 +279,11 @@ describe('All conversion helper functions works', () => {
 
     const conversionHelpers = new ConversionHelpers(knex);
 
-    await conversionHelpers.updateOneById('table')(req, res);
+    conversionHelpers.returnError = jest.fn();
+
+    const mockNext = jest.fn();
+
+    await conversionHelpers.updateOneById('table')(req, res, mockNext);
 
     expect(knex.where).toHaveBeenCalledWith({ id: 1 });
 
@@ -284,9 +316,13 @@ describe('All conversion helper functions works', () => {
 
     const conversionHelpers = new ConversionHelpers(knex);
 
-    await conversionHelpers.updateOneById('table')(req, res);
+    conversionHelpers.returnError = jest.fn();
 
-    expect(res.status).toHaveBeenCalledWith(500);
+    const mockNext = jest.fn();
+
+    await conversionHelpers.updateOneById('table')(req, res, mockNext);
+
+    expect(conversionHelpers.returnError).toHaveBeenCalled();
   });
 
   it('Gets one by id', async () => {
@@ -312,7 +348,11 @@ describe('All conversion helper functions works', () => {
 
     const conversionHelpers = new ConversionHelpers(knex);
 
-    await conversionHelpers.getOneById('table')(req, res);
+    conversionHelpers.returnError = jest.fn();
+
+    const mockNext = jest.fn();
+
+    await conversionHelpers.getOneById('table')(req, res, mockNext);
 
     expect(res.status).toHaveBeenCalledWith(200);
     expect(knex.table).toHaveBeenCalledWith('table');
@@ -345,7 +385,11 @@ describe('All conversion helper functions works', () => {
 
     const conversionHelpers = new ConversionHelpers(knex);
 
-    await conversionHelpers.getOneById('table')(req, res);
+    conversionHelpers.returnError = jest.fn();
+
+    const mockNext = jest.fn();
+
+    await conversionHelpers.getOneById('table')(req, res, mockNext);
 
     expect(res.status).toHaveBeenCalledWith(200);
     expect(knex.table).toHaveBeenCalledWith('table');
@@ -380,9 +424,13 @@ describe('All conversion helper functions works', () => {
 
     const conversionHelpers = new ConversionHelpers(knex);
 
-    await conversionHelpers.getOneById('table')(req, res);
+    conversionHelpers.returnError = jest.fn();
 
-    expect(res.status).toHaveBeenCalledWith(500);
+    const mockNext = jest.fn();
+
+    await conversionHelpers.getOneById('table')(req, res, mockNext);
+
+    expect(conversionHelpers.returnError).toHaveBeenCalled();
   });
 
   it('Deletes one by id', async () => {
@@ -408,7 +456,11 @@ describe('All conversion helper functions works', () => {
 
     const conversionHelpers = new ConversionHelpers(knex);
 
-    await conversionHelpers.deleteOneById('table')(req, res);
+    conversionHelpers.returnError = jest.fn();
+
+    const mockNext = jest.fn();
+
+    await conversionHelpers.deleteOneById('table')(req, res, mockNext);
 
     expect(res.status).toHaveBeenCalledWith(201);
     expect(knex.table).toHaveBeenCalledWith('table');
@@ -441,7 +493,11 @@ describe('All conversion helper functions works', () => {
 
     const conversionHelpers = new ConversionHelpers(knex);
 
-    await conversionHelpers.deleteOneById('table')(req, res);
+    conversionHelpers.returnError = jest.fn();
+
+    const mockNext = jest.fn();
+
+    await conversionHelpers.deleteOneById('table')(req, res, mockNext);
 
     expect(res.status).toHaveBeenCalledWith(201);
     expect(knex.table).toHaveBeenCalledWith('table');
@@ -476,9 +532,13 @@ describe('All conversion helper functions works', () => {
 
     const conversionHelpers = new ConversionHelpers(knex);
 
-    await conversionHelpers.deleteOneById('table')(req, res);
+    conversionHelpers.returnError = jest.fn();
 
-    expect(res.status).toHaveBeenCalledWith(500);
+    const mockNext = jest.fn();
+
+    await conversionHelpers.deleteOneById('table')(req, res, mockNext);
+
+    expect(conversionHelpers.returnError).toHaveBeenCalled();
   });
 
   it('Deletes one by id fails in data base', async () => {
@@ -504,15 +564,22 @@ describe('All conversion helper functions works', () => {
 
     const conversionHelpers = new ConversionHelpers(knex);
 
-    await conversionHelpers.deleteOneById('table')(req, res);
+    conversionHelpers.returnError = jest.fn();
 
-    expect(res.status).toHaveBeenCalledWith(501);
+    const mockNext = jest.fn();
+
+    await conversionHelpers.deleteOneById('table')(req, res, mockNext);
+
     expect(knex.table).toHaveBeenCalledWith('table');
     expect(knex.where).toHaveBeenCalledWith({ other_id: 1 });
-    expect(res.json).toHaveBeenCalledWith({
-      message: 'Could not delete from the data base',
-      code: 500001,
-    });
+    expect(conversionHelpers.returnError).toHaveBeenCalledWith(
+      'Could not delete from the data base',
+      'Could not delete from the data base',
+      501001,
+      501,
+      'deleteOneById',
+      mockNext,
+    );
   });
 
   it('Columns to select works', () => {
@@ -527,6 +594,10 @@ describe('All conversion helper functions works', () => {
     const knex = {} as any as Knex;
 
     const conversionHelpers = new ConversionHelpers(knex);
+
+    conversionHelpers.returnError = jest.fn();
+
+    const mockNext = jest.fn();
 
     const columns = conversionHelpers.columnsToSelect(
       'table',
@@ -549,6 +620,10 @@ describe('All conversion helper functions works', () => {
     const knex = {} as any as Knex;
 
     const conversionHelpers = new ConversionHelpers(knex);
+
+    conversionHelpers.returnError = jest.fn();
+
+    const mockNext = jest.fn();
 
     const columns = conversionHelpers.columnsToSelect(
       'table',
@@ -598,9 +673,13 @@ describe('All conversion helper functions works', () => {
 
     const conversionHelpers = new ConversionHelpers(knex);
 
+    conversionHelpers.returnError = jest.fn();
+
+    const mockNext = jest.fn();
+
     conversionHelpers.createFilter = jest.fn().mockReturnValue(knex);
 
-    await conversionHelpers.query('table')(req, res);
+    await conversionHelpers.query('table')(req, res, mockNext);
 
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith({
@@ -651,9 +730,13 @@ describe('All conversion helper functions works', () => {
 
     const conversionHelpers = new ConversionHelpers(knex);
 
+    conversionHelpers.returnError = jest.fn();
+
+    const mockNext = jest.fn();
+
     conversionHelpers.createFilter = jest.fn().mockReturnValue(knex);
 
-    await conversionHelpers.query('table')(req, res);
+    await conversionHelpers.query('table')(req, res, mockNext);
 
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith({
@@ -709,9 +792,13 @@ describe('All conversion helper functions works', () => {
 
     const conversionHelpers = new ConversionHelpers(knex);
 
+    conversionHelpers.returnError = jest.fn();
+
+    const mockNext = jest.fn();
+
     conversionHelpers.createFilter = jest.fn().mockReturnValue(knex);
 
-    await conversionHelpers.query('table')(req, res);
+    await conversionHelpers.query('table')(req, res, mockNext);
 
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith({
@@ -753,9 +840,13 @@ describe('All conversion helper functions works', () => {
 
     const conversionHelpers = new ConversionHelpers(knex);
 
+    conversionHelpers.returnError = jest.fn();
+
+    const mockNext = jest.fn();
+
     conversionHelpers.createFilter = jest.fn().mockReturnValue([{ id: 1 }]);
 
-    await conversionHelpers.query('table')(req, res);
+    await conversionHelpers.query('table')(req, res, mockNext);
 
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith({
@@ -806,11 +897,14 @@ describe('All conversion helper functions works', () => {
 
     const conversionHelpers = new ConversionHelpers(knex);
 
+    conversionHelpers.returnError = jest.fn();
+
+    const mockNext = jest.fn();
+
     conversionHelpers.createFilter = jest.fn().mockReturnValue(knex);
 
-    await conversionHelpers.query('table')(req, res);
-
-    expect(res.status).toHaveBeenCalledWith(500);
+    await conversionHelpers.query('table')(req, res, mockNext);
+    expect(conversionHelpers.returnError).toHaveBeenCalled();
   });
 
   it('Create Filter', () => {
@@ -839,6 +933,8 @@ describe('All conversion helper functions works', () => {
     } as any as Knex;
 
     const conversionHelpers = new ConversionHelpers(knex);
+
+    conversionHelpers.returnError = jest.fn();
 
     conversionHelpers.createFilter(
       [
@@ -940,5 +1036,74 @@ describe('All conversion helper functions works', () => {
     expect(knex.orWhereBetween).toHaveBeenCalledWith('c6', 1);
     expect(knex.orWhereNull).toHaveBeenCalledWith('c7');
     expect(knex.orWhereNotNull).toHaveBeenCalledWith('c8');
+  });
+
+  it('Error function', () => {
+    const knex = {} as any as Knex;
+    const conversionHelpers = new ConversionHelpers(knex);
+
+    const nextErrorMock = jest.fn();
+
+    conversionHelpers.returnError(
+      'some error',
+      'some error',
+      500000,
+      500,
+      'test',
+      nextErrorMock,
+    );
+
+    expect(nextErrorMock).toBeCalledWith({
+      message: 'some error',
+      statusCode: 500,
+      errorCode: 500000,
+      onFunction: 'test',
+      onFile: 'ConversionHelpers.ts',
+      logMessage: 'some error',
+      errorObject: undefined,
+      originalError: undefined,
+    });
+
+    conversionHelpers.returnError(
+      'some error',
+      'some error',
+      500000,
+      500,
+      'test',
+      nextErrorMock,
+      { response: true },
+    );
+
+    expect(nextErrorMock).toBeCalledWith({
+      message: 'some error',
+      statusCode: 500,
+      errorCode: 500000,
+      onFunction: 'test',
+      onFile: 'ConversionHelpers.ts',
+      logMessage: 'some error',
+      errorObject: true,
+      originalError: undefined,
+    });
+
+    conversionHelpers.returnError(
+      'some error',
+      'some error',
+      500000,
+      500,
+      'test',
+      nextErrorMock,
+      { sqlState: true },
+    );
+
+    expect(nextErrorMock).toBeCalledWith({
+      message: 'Data base error. some error',
+      statusCode: 500,
+      errorCode: 500000,
+      onFunction: 'test',
+      onFile: 'ConversionHelpers.ts',
+      logMessage: 'some error',
+      errorObject: undefined,
+      originalError: { sqlState: true },
+    });
   });
 });

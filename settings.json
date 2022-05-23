@@ -11,5 +11,6 @@
   "swaggerName": "${SWAGGER_NAME}",
   "swaggerUrl": "${SWAGGER_URL}",
   "cryptoKey": "${CRYPTO_KEY}",
-  "occultSystemTables": true
+  "occultSystemTables": true,
+  "jwtTokenExpiresIn": "24h"
 }

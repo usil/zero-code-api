@@ -1,6 +1,7 @@
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import { Knex } from 'knex';
 import tableSettings from '../../tableSettings';
+import ErrorForNext from '../util/ErrorForNext';
 
 class QueryBody {
   filters: Filter[];
@@ -22,8 +23,36 @@ class ConversionHelpers {
     this.knex = knex;
   }
 
+  returnError = (
+    message: string,
+    logMessage: string,
+    errorCode: number,
+    statusCode: number,
+    onFunction: string,
+    next: NextFunction,
+    error?: any,
+  ) => {
+    const errorForNext = new ErrorForNext(
+      message,
+      statusCode,
+      errorCode,
+      onFunction,
+      'ConversionHelpers.ts',
+    ).setLogMessage(logMessage);
+
+    if (error && error.response === undefined)
+      errorForNext.setOriginalError(error);
+
+    if (error && error.response) errorForNext.setErrorObject(error.response);
+
+    if (error && error.sqlState)
+      errorForNext.setMessage(`Data base error. ${message}`);
+
+    return next(errorForNext.toJSON());
+  };
+
   getAll = (tableName: string) => {
-    return async (req: Request, res: Response) => {
+    return async (req: Request, res: Response, next: NextFunction) => {
       try {
         let orderType = 'asc';
         let orderByColumn = 'id';
@@ -81,14 +110,21 @@ class ConversionHelpers {
           code: 200000,
         });
       } catch (error) {
-        console.error(error);
-        return res.status(500).json({ message: error.message, code: 500000 });
+        return this.returnError(
+          error.message,
+          error.message,
+          500001,
+          500,
+          'getAll',
+          next,
+          error,
+        );
       }
     };
   };
 
   create = (tableName: string) => {
-    return async (req: Request, res: Response) => {
+    return async (req: Request, res: Response, next: NextFunction) => {
       try {
         const result = await this.knex
           .table(tableName)
@@ -102,14 +138,21 @@ class ConversionHelpers {
         }
         return res.status(201).json(responseObj);
       } catch (error) {
-        console.error(error);
-        return res.status(500).json({ message: error.message, code: 500000 });
+        return this.returnError(
+          error.message,
+          error.message,
+          500002,
+          500,
+          'create',
+          next,
+          error,
+        );
       }
     };
   };
 
   updateOneById = (tableName: string) => {
-    return async (req: Request, res: Response) => {
+    return async (req: Request, res: Response, next: NextFunction) => {
       try {
         let identifierColumn = 'id';
         if (req.query['identifierColumn']) {
@@ -125,14 +168,21 @@ class ConversionHelpers {
           code: 200001,
         });
       } catch (error) {
-        console.error(error);
-        return res.status(500).json({ message: error.message, code: 500000 });
+        return this.returnError(
+          error.message,
+          error.message,
+          500003,
+          500,
+          'updateOneById',
+          next,
+          error,
+        );
       }
     };
   };
 
   getOneById = (tableName: string) => {
-    return async (req: Request, res: Response) => {
+    return async (req: Request, res: Response, next: NextFunction) => {
       try {
         let identifierColumn = 'id';
         if (req.query['identifierColumn']) {
@@ -149,14 +199,21 @@ class ConversionHelpers {
           code: 200000,
         });
       } catch (error) {
-        console.error(error);
-        return res.status(500).json({ message: error.message, code: 500000 });
+        return this.returnError(
+          error.message,
+          error.message,
+          500004,
+          500,
+          'getOneById',
+          next,
+          error,
+        );
       }
     };
   };
 
   deleteOneById = (tableName: string) => {
-    return async (req: Request, res: Response) => {
+    return async (req: Request, res: Response, next: NextFunction) => {
       try {
         let identifierColumn = 'id';
         if (req.query['identifierColumn']) {
@@ -169,10 +226,14 @@ class ConversionHelpers {
           .del();
 
         if (result !== 1) {
-          return res.status(501).json({
-            message: 'Could not delete from the data base',
-            code: 500001,
-          });
+          return this.returnError(
+            'Could not delete from the data base',
+            'Could not delete from the data base',
+            501001,
+            501,
+            'deleteOneById',
+            next,
+          );
         }
 
         return res.status(201).json({
@@ -181,8 +242,15 @@ class ConversionHelpers {
           code: 200001,
         });
       } catch (error) {
-        console.error(error);
-        return res.status(500).json({ message: error.message, code: 500000 });
+        return this.returnError(
+          error.message,
+          error.message,
+          500005,
+          500,
+          'deleteOneById',
+          next,
+          error,
+        );
       }
     };
   };
@@ -217,7 +285,7 @@ class ConversionHelpers {
   };
 
   query = (tableName: string) => {
-    return async (req: Request, res: Response) => {
+    return async (req: Request, res: Response, next: NextFunction) => {
       try {
         let pagination = true;
         let itemsPerPage = 20;
@@ -283,8 +351,15 @@ class ConversionHelpers {
           .status(200)
           .json({ content: result, message: 'success', code: 200001 });
       } catch (error) {
-        console.error(error);
-        return res.status(500).json({ message: error.message, code: 500000 });
+        return this.returnError(
+          error.message,
+          error.message,
+          500006,
+          500,
+          'query',
+          next,
+          error,
+        );
       }
     };
   };

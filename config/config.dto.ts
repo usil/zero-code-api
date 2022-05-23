@@ -1,4 +1,4 @@
-import bunyan from 'bunyan';
+import log4js from 'log4js';
 
 /**
  * @description The parameters that all environments should have
@@ -7,12 +7,13 @@ export class ConfigGlobalDto {
   state: string;
   port: number;
   dataBaseName: string;
-  log: () => bunyan;
+  log: () => log4js.Logger;
   dataBaseHost: string;
   dataBasePort: number;
   dataBaseUser: string;
   dataBasePassword: string;
   jwtSecret: string;
+  jwtTokenExpiresIn: string;
   swaggerEmail: string;
   swaggerName: string;
   swaggerUrl: string;

@@ -1,8 +1,9 @@
 import { ConfigGlobalDto } from '../../../config/config.dto';
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import { Knex } from 'knex';
 import MysqlConversion, { Column, FullTable } from './MysqlConversion';
 import tableSettings from '../../tableSettings';
+import ErrorForNext from '../util/ErrorForNext';
 
 class GeneralHelpers {
   knex: Knex;
@@ -13,7 +14,35 @@ class GeneralHelpers {
     this.configuration = configuration;
   }
 
-  getAllTables = async (_req: Request, res: Response) => {
+  returnError = (
+    message: string,
+    logMessage: string,
+    errorCode: number,
+    statusCode: number,
+    onFunction: string,
+    next: NextFunction,
+    error?: any,
+  ) => {
+    const errorForNext = new ErrorForNext(
+      message,
+      statusCode,
+      errorCode,
+      onFunction,
+      'GeneralHelpers.ts',
+    ).setLogMessage(logMessage);
+
+    if (error && error.response === undefined)
+      errorForNext.setOriginalError(error);
+
+    if (error && error.response) errorForNext.setErrorObject(error.response);
+
+    if (error && error.sqlState)
+      errorForNext.setMessage(`Data base error. ${message}`);
+
+    return next(errorForNext.toJSON());
+  };
+
+  getAllTables = async (_req: Request, res: Response, next: NextFunction) => {
     try {
       const mysqlConversion = new MysqlConversion(
         this.knex,
@@ -21,13 +50,28 @@ class GeneralHelpers {
       );
       const [tables, error] = await mysqlConversion.getTables();
       if (error) {
-        return res.status(500).json({ message: error, code: 500000 });
+        return this.returnError(
+          error,
+          error,
+          500101,
+          500,
+          'getAllTables',
+          next,
+        );
       }
       return res
         .status(200)
         .json({ message: 'Tables selected', code: 200000, content: tables });
     } catch (error) {
-      return res.status(500).json({ message: error.message, code: 500000 });
+      return this.returnError(
+        error.message,
+        error.message,
+        500101,
+        500,
+        'getAllTables',
+        next,
+        error,
+      );
     }
   };
 
@@ -52,7 +96,7 @@ class GeneralHelpers {
     return newColumns;
   };
 
-  getFullTable = async (req: Request, res: Response) => {
+  getFullTable = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const tableName = req.params.tableName;
       const mysqlConversion = new MysqlConversion(
@@ -61,7 +105,14 @@ class GeneralHelpers {
       );
       const [fullTable, error] = await mysqlConversion.getFullTable(tableName);
       if (error) {
-        return res.status(500).json({ message: error, code: 500000 });
+        return this.returnError(
+          error,
+          error,
+          500101,
+          500,
+          'getFullTable',
+          next,
+        );
       }
 
       fullTable.columns = this.columnsToSelect(
@@ -74,7 +125,15 @@ class GeneralHelpers {
         .status(200)
         .json({ message: 'Table selected', code: 200000, content: fullTable });
     } catch (error) {
-      return res.status(500).json({ message: error.message, code: 500000 });
+      return this.returnError(
+        error.message,
+        error.message,
+        500101,
+        500,
+        'getFullTable',
+        next,
+        error,
+      );
     }
   };
 }

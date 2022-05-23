@@ -1,5 +1,5 @@
 import compression from 'compression';
-import express, { Application, Request, Response } from 'express';
+import express, { Application, NextFunction, Request, Response } from 'express';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import cors from 'cors';
@@ -14,6 +14,7 @@ import { getConfig } from '../../config/main.config';
 import Conversion from './conversion/Conversions';
 import OauthBoot from 'nodeboot-oauth2-starter';
 import MysqlConversion from './conversion/MysqlConversion';
+import { v4 as uuidv4 } from 'uuid';
 
 /**
  *
@@ -60,18 +61,20 @@ class ServerInitialization
       const oauthBoot = new OauthBoot(
         this.baseExpressApp,
         this.knexPool,
-        this.configuration.jwtSecret,
-        this.configuration.cryptoKey,
-        parsedTables,
-        'zero_code_api',
-        '::usil.zc.app',
+        this.configuration.log(),
+        {
+          jwtSecret: this.configuration.jwtSecret,
+          cryptoSecret: this.configuration.cryptoKey,
+          extraResources: parsedTables,
+          mainApplicationName: 'zero_code_api',
+          clientIdSuffix: '::usil.zc.app',
+          expiresIn: this.configuration.jwtTokenExpiresIn,
+        },
       );
 
       this.app = oauthBoot.expressSecured;
 
       this.addBasicConfiguration();
-
-      oauthBoot.setTokenExpirationTime('12h');
 
       await oauthBoot.init();
 
@@ -133,12 +136,39 @@ class ServerInitialization
     this.app.use(fullRoute.route, fullRoute.router);
   }
 
+  errorHandle = (
+    err: {
+      message: string;
+      statusCode?: number;
+      errorCode?: number;
+      onFunction?: string;
+      onLibrary?: string;
+      onFile?: string;
+      logMessage?: string;
+      errorObject?: Record<string, any>;
+    },
+    _req: Request,
+    res: Response,
+    _next: NextFunction,
+  ) => {
+    const uudid = uuidv4();
+    this.configuration
+      .log()
+      .error(uudid, '-', err.logMessage || err.message, { ...err });
+    return res.status(err.statusCode || 500).json({
+      message: err.message,
+      code: err.errorCode || 500000,
+      errorUUID: uudid,
+    });
+  };
+
   /**
    * @description Creates the server
    */
   createServer(): http.Server {
     this.server = http.createServer(this.app);
     this.server.listen(this.port);
+    this.app.use(this.errorHandle);
     return this.server;
   }
 }

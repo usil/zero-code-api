@@ -145,8 +145,8 @@ class MySqlConversion {
       this.tables = localTables;
       const tablesColumns: Record<string, any[]> = {};
       for (const table of this.tables) {
-        const [columns, error] = await this.getTableColumns(table);
-        if (columns === null) return [null, error];
+        const [columns, getTablesError] = await this.getTableColumns(table);
+        if (columns === null) return [null, getTablesError];
         tablesColumns[table.table_name] = columns;
       }
       this.tablesColumns = tablesColumns;

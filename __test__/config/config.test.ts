@@ -1,5 +1,5 @@
 import { getConfig } from '../../config/main.config';
-import bunyan from 'bunyan';
+import log4js from 'log4js';
 
 describe('Correct configuration declaration', () => {
   const configuration = getConfig();
@@ -10,7 +10,7 @@ describe('Correct configuration declaration', () => {
   });
 
   it('Correct logger', () => {
-    expect(configuration.log()).toBeInstanceOf(bunyan);
+    expect(configuration.log()).toBeTruthy();
   });
 
   it('Correct port', () => {
@@ -30,5 +30,16 @@ describe('Correct configuration declaration', () => {
 
   it('Correct database password', () => {
     expect(configuration.dataBasePassword).toBeTruthy();
+  });
+
+  it('Correct logger wit othe configuration', () => {
+    process.env.LOG_LEVEL = 'error';
+    process.env.USE_FILE = 'true';
+    const otherConfiguration = getConfig();
+    expect(otherConfiguration.log()).toBeTruthy();
+    process.env.LOG_LEVEL = undefined;
+    process.env.USE_FILE = undefined;
+    const otherConfigurationSecond = getConfig();
+    expect(otherConfigurationSecond.log()).toBeTruthy();
   });
 });

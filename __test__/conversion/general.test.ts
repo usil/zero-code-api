@@ -25,7 +25,9 @@ describe('General helpers works', () => {
         null,
       ]);
     const generalHelpers = new GeneralHelpers(knex, configuration);
-    await generalHelpers.getAllTables(req, res);
+    generalHelpers.returnError = jest.fn();
+    const mockNext = jest.fn();
+    await generalHelpers.getAllTables(req, res, mockNext);
     expect(spyGetTables).toHaveBeenCalled();
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith({
@@ -80,9 +82,12 @@ describe('General helpers works', () => {
       .spyOn(MysqlConversion.prototype, 'getTables')
       .mockRejectedValue(new Error('Async error'));
     const generalHelpers = new GeneralHelpers(knex, configuration);
-    await generalHelpers.getAllTables(req, res);
-    expect(spyGetTables).toHaveBeenCalled();
-    expect(res.status).toHaveBeenCalledWith(500);
+    generalHelpers.returnError = jest.fn();
+    const mockNext = jest.fn();
+
+    await generalHelpers.getAllTables(req, res, mockNext);
+    expect(generalHelpers.returnError).toHaveBeenCalled();
+
     spyGetTables.mockRestore();
   });
 
@@ -98,9 +103,11 @@ describe('General helpers works', () => {
       .spyOn(MysqlConversion.prototype, 'getTables')
       .mockResolvedValue([null, 'Some error']);
     const generalHelpers = new GeneralHelpers(knex, configuration);
-    await generalHelpers.getAllTables(req, res);
-    expect(spyGetTables).toHaveBeenCalled();
-    expect(res.status).toHaveBeenCalledWith(500);
+    const mockNext = jest.fn();
+    generalHelpers.returnError = jest.fn();
+    await generalHelpers.getAllTables(req, res, mockNext);
+    expect(generalHelpers.returnError).toHaveBeenCalled();
+
     spyGetTables.mockRestore();
   });
 
@@ -124,7 +131,9 @@ describe('General helpers works', () => {
         null,
       ]);
     const generalHelpers = new GeneralHelpers(knex, configuration);
-    await generalHelpers.getFullTable(req, res);
+    const mockNext = jest.fn();
+    generalHelpers.returnError = jest.fn();
+    await generalHelpers.getFullTable(req, res, mockNext);
     expect(spyGetFullTable).toHaveBeenCalledWith('table');
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith({
@@ -151,9 +160,10 @@ describe('General helpers works', () => {
       .spyOn(MysqlConversion.prototype, 'getFullTable')
       .mockResolvedValue([null, 'Some error']);
     const generalHelpers = new GeneralHelpers(knex, configuration);
-    await generalHelpers.getFullTable(req, res);
-    expect(spyGetFullTable).toHaveBeenCalledWith('table');
-    expect(res.status).toHaveBeenCalledWith(500);
+    const mockNext = jest.fn();
+    generalHelpers.returnError = jest.fn();
+    await generalHelpers.getFullTable(req, res, mockNext);
+    expect(generalHelpers.returnError).toHaveBeenCalled();
   });
 
   it('Get full tables fails', async () => {
@@ -168,8 +178,79 @@ describe('General helpers works', () => {
       .spyOn(MysqlConversion.prototype, 'getFullTable')
       .mockRejectedValue(new Error('Async error'));
     const generalHelpers = new GeneralHelpers(knex, configuration);
-    await generalHelpers.getFullTable(req, res);
-    expect(spyGetFullTable).toHaveBeenCalledWith('table');
-    expect(res.status).toHaveBeenCalledWith(500);
+    const mockNext = jest.fn();
+    generalHelpers.returnError = jest.fn();
+    await generalHelpers.getFullTable(req, res, mockNext);
+    expect(generalHelpers.returnError).toHaveBeenCalled();
+  });
+
+  it('Error function', () => {
+    const knex = {} as any as Knex;
+    const configuration = {} as any;
+    const generalHelpers = new GeneralHelpers(knex, configuration);
+
+    const nextErrorMock = jest.fn();
+
+    generalHelpers.returnError(
+      'some error',
+      'some error',
+      500000,
+      500,
+      'test',
+      nextErrorMock,
+    );
+
+    expect(nextErrorMock).toBeCalledWith({
+      message: 'some error',
+      statusCode: 500,
+      errorCode: 500000,
+      onFunction: 'test',
+      onFile: 'GeneralHelpers.ts',
+      logMessage: 'some error',
+      errorObject: undefined,
+      originalError: undefined,
+    });
+
+    generalHelpers.returnError(
+      'some error',
+      'some error',
+      500000,
+      500,
+      'test',
+      nextErrorMock,
+      { response: true },
+    );
+
+    expect(nextErrorMock).toBeCalledWith({
+      message: 'some error',
+      statusCode: 500,
+      errorCode: 500000,
+      onFunction: 'test',
+      onFile: 'GeneralHelpers.ts',
+      logMessage: 'some error',
+      errorObject: true,
+      originalError: undefined,
+    });
+
+    generalHelpers.returnError(
+      'some error',
+      'some error',
+      500000,
+      500,
+      'test',
+      nextErrorMock,
+      { sqlState: true },
+    );
+
+    expect(nextErrorMock).toBeCalledWith({
+      message: 'Data base error. some error',
+      statusCode: 500,
+      errorCode: 500000,
+      onFunction: 'test',
+      onFile: 'GeneralHelpers.ts',
+      logMessage: 'some error',
+      errorObject: undefined,
+      originalError: { sqlState: true },
+    });
   });
 });

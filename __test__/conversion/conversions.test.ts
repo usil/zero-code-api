@@ -186,6 +186,65 @@ describe('All conversion functions work', () => {
     spyGetAllTablesColumns.mockRestore();
   });
 
+  it('Test refresh endpoint', async () => {
+    const spyGetTables = jest
+      .spyOn(MySqlConversion.prototype, 'getTables')
+      .mockResolvedValue([
+        [
+          {
+            table_name: 'table',
+            table_schema: 'schema',
+          },
+        ],
+        null,
+      ]);
+
+    const knex = {
+      client: {
+        config: {
+          client: 'mysql2',
+        },
+      },
+    } as any as Knex;
+
+    const req = {
+      protocol: 'http',
+      get: jest.fn().mockReturnValue('1600'),
+      swaggerDoc: '',
+    } as any;
+
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    } as any as Response;
+
+    const next = jest.fn();
+
+    const oauthBoot = {} as any;
+
+    const conversion = new Conversion(knex, oauthBoot);
+
+    conversion.setGetOneByIdEndpoints = jest.fn();
+    conversion.setGetALLEndpoints = jest.fn();
+    conversion.setGetUpdateByIdEndpoints = jest.fn();
+    conversion.setDeleteOneByIdEndpoints = jest.fn();
+    conversion.setCreateEndpoints = jest.fn();
+    conversion.setQueryEndpoints = jest.fn();
+
+    await conversion.refreshEndpoints(req, res, next);
+
+    expect(conversion.setGetOneByIdEndpoints).toHaveBeenCalled();
+    expect(conversion.setGetALLEndpoints).toHaveBeenCalled();
+    expect(conversion.setGetUpdateByIdEndpoints).toHaveBeenCalled();
+    expect(conversion.setDeleteOneByIdEndpoints).toHaveBeenCalled();
+    expect(conversion.setCreateEndpoints).toHaveBeenCalled();
+    expect(conversion.setQueryEndpoints).toHaveBeenCalled();
+    expect(res.json).toHaveBeenCalledWith({
+      message: 'Endpoints refreshed',
+      code: 200000,
+    });
+  });
+
   it('Generates swagger fails', async () => {
     const knex = {
       client: {
@@ -219,9 +278,11 @@ describe('All conversion functions work', () => {
 
     const conversion = new Conversion(knex, oauthBoot);
 
+    conversion.returnError = jest.fn();
+
     await conversion.setSwaggerMiddleware(req, res, next);
 
-    expect(res.status).toHaveBeenCalledWith(500);
+    expect(conversion.returnError).toHaveBeenCalled();
 
     spyGenerateSwaggerJson.mockRestore();
     spyGetAllTablesColumns.mockRestore();
@@ -260,11 +321,13 @@ describe('All conversion functions work', () => {
 
     const conversion = new Conversion(knex, oauthBoot);
 
+    conversion.returnError = jest.fn();
+
     await conversion.setSwaggerMiddleware(req, res, next);
 
     expect(spyGenerateSwaggerJson).not.toHaveBeenCalledWith();
     expect(spyGetAllTablesColumns).toHaveBeenCalled();
-    expect(res.status).toHaveBeenCalledWith(500);
+    expect(conversion.returnError).toHaveBeenCalled();
 
     spyGenerateSwaggerJson.mockRestore();
     spyGetAllTablesColumns.mockRestore();
@@ -303,15 +366,89 @@ describe('All conversion functions work', () => {
 
     const conversion = new Conversion(knex, oauthBoot);
 
+    conversion.returnError = jest.fn();
+
     await conversion.setSwaggerMiddleware(req, res, next);
 
-    expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.json).toHaveBeenCalledWith({
-      code: 500100,
-      message: 'Unsupported data base',
-    });
+    expect(conversion.returnError).toHaveBeenCalled();
 
     spyGenerateSwaggerJson.mockRestore();
     spyGetAllTablesColumns.mockRestore();
+  });
+
+  it('Error function', () => {
+    const knex = {
+      client: {
+        config: {
+          client: 'not',
+        },
+      },
+    } as any as Knex;
+    const oauthBoot = {} as any;
+    const conversion = new Conversion(knex, oauthBoot);
+
+    const nextErrorMock = jest.fn();
+
+    conversion.returnError(
+      'some error',
+      'some error',
+      500000,
+      500,
+      'test',
+      nextErrorMock,
+    );
+
+    expect(nextErrorMock).toBeCalledWith({
+      message: 'some error',
+      statusCode: 500,
+      errorCode: 500000,
+      onFunction: 'test',
+      onFile: 'Conversions.ts',
+      logMessage: 'some error',
+      errorObject: undefined,
+      originalError: undefined,
+    });
+
+    conversion.returnError(
+      'some error',
+      'some error',
+      500000,
+      500,
+      'test',
+      nextErrorMock,
+      { response: true },
+    );
+
+    expect(nextErrorMock).toBeCalledWith({
+      message: 'some error',
+      statusCode: 500,
+      errorCode: 500000,
+      onFunction: 'test',
+      onFile: 'Conversions.ts',
+      logMessage: 'some error',
+      errorObject: true,
+      originalError: undefined,
+    });
+
+    conversion.returnError(
+      'some error',
+      'some error',
+      500000,
+      500,
+      'test',
+      nextErrorMock,
+      { sqlState: true },
+    );
+
+    expect(nextErrorMock).toBeCalledWith({
+      message: 'Data base error. some error',
+      statusCode: 500,
+      errorCode: 500000,
+      onFunction: 'test',
+      onFile: 'Conversions.ts',
+      logMessage: 'some error',
+      errorObject: undefined,
+      originalError: { sqlState: true },
+    });
   });
 });

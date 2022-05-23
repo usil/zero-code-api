@@ -7,6 +7,7 @@ import MysqlConversion from './MysqlConversion';
 import { NextFunction, Request, Response } from 'express';
 import SwaggerGenerator from './SwaggerGenerator';
 import GeneralHelpers from './GeneralHelpers';
+import ErrorForNext from '../util/ErrorForNext';
 
 interface Table {
   table_name: string;
@@ -44,6 +45,34 @@ class Conversion {
     this.knexConfig = knex.client.config;
   }
 
+  returnError = (
+    message: string,
+    logMessage: string,
+    errorCode: number,
+    statusCode: number,
+    onFunction: string,
+    next: NextFunction,
+    error?: any,
+  ) => {
+    const errorForNext = new ErrorForNext(
+      message,
+      statusCode,
+      errorCode,
+      onFunction,
+      'Conversions.ts',
+    ).setLogMessage(logMessage);
+
+    if (error && error.response === undefined)
+      errorForNext.setOriginalError(error);
+
+    if (error && error.response) errorForNext.setErrorObject(error.response);
+
+    if (error && error.sqlState)
+      errorForNext.setMessage(`Data base error. ${message}`);
+
+    return next(errorForNext.toJSON());
+  };
+
   async generateConversionRouter() {
     try {
       this.conversionHelpers = new ConversionHelpers(this.knex);
@@ -78,7 +107,6 @@ class Conversion {
   }
 
   setRefreshEndpoint = () => {
-    console.log('refresh');
     this.authRouter.obPost(
       `/zero-code/refresh`,
       `OAUTH2_global:*`,
@@ -86,7 +114,11 @@ class Conversion {
     );
   };
 
-  refreshEndpoints = async (_req: Request, res: Response) => {
+  refreshEndpoints = async (
+    _req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
     try {
       const mysqlConversion = new MysqlConversion(
         this.knex,
@@ -106,17 +138,21 @@ class Conversion {
       this.setQueryEndpoints(tables);
       return res.json({ message: 'Endpoints refreshed', code: 200000 });
     } catch (error) {
-      this.configuration.log().error(error.message);
-      return res.status(500).json({
-        code: 500200,
-        message: `Could no refresh endpoints; ${error.message}`,
-      });
+      return this.returnError(
+        error.message,
+        error.message,
+        500101,
+        500,
+        'refreshEndpoints',
+        next,
+        error,
+      );
     }
   };
 
   setSwaggerMiddleware = async (
     req: Request,
-    res: Response,
+    _res: Response,
     next: NextFunction,
   ) => {
     try {
@@ -131,18 +167,28 @@ class Conversion {
           );
           const [result, error] = await mysqlConversion.getAllTablesColumns();
           if (error) {
-            return res.status(500).json({
-              code: 500100,
-              message: 'Could not grater data base tables',
-            });
+            return this.returnError(
+              error,
+              error,
+              500103,
+              500,
+              'setSwaggerMiddleware',
+              next,
+            );
           }
           tableColumns = result.tablesColumns;
           tables = result.tables;
           break;
         default:
-          return res
-            .status(500)
-            .json({ code: 500100, message: 'Unsupported data base' });
+          return this.returnError(
+            'Unsupported data base',
+            'Unsupported data base',
+            400101,
+            400,
+            'setSwaggerMiddleware',
+            next,
+            error,
+          );
       }
 
       const swaggerGenerator = new SwaggerGenerator(
@@ -164,9 +210,15 @@ class Conversion {
       (req as any).swaggerDoc = swaggerDoc;
       next();
     } catch (error) {
-      return res
-        .status(500)
-        .json({ code: 500200, message: 'Could no generate swagger' });
+      return this.returnError(
+        error.message,
+        error.message,
+        500102,
+        500,
+        'setSwaggerMiddleware',
+        next,
+        error,
+      );
     }
   };
 
