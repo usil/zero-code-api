@@ -34,11 +34,11 @@ describe('Correct configuration declaration', () => {
 
   it('Correct logger wit othe configuration', () => {
     process.env.LOG_LEVEL = 'error';
-    process.env.USE_FILE = 'true';
+    process.env.LOG_FILE_PATH = 'true';
     const otherConfiguration = getConfig();
     expect(otherConfiguration.log()).toBeTruthy();
     process.env.LOG_LEVEL = undefined;
-    process.env.USE_FILE = undefined;
+    process.env.LOG_FILE_PATH = undefined;
     const otherConfigurationSecond = getConfig();
     expect(otherConfigurationSecond.log()).toBeTruthy();
   });
