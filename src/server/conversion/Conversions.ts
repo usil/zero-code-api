@@ -100,6 +100,7 @@ class Conversion {
       this.setDeleteOneByIdEndpoints(tables);
       this.setCreateEndpoints(tables);
       this.setQueryEndpoints(tables);
+      this.setRawDataBaseQueryEndPoint();
     } catch (error) {
       this.configuration.log().error(error.message);
       throw new Error(error.message);
@@ -111,6 +112,14 @@ class Conversion {
       `/zero-code/refresh`,
       `OAUTH2_global:*`,
       this.refreshEndpoints,
+    );
+  };
+
+  setRawDataBaseQueryEndPoint = () => {
+    this.authRouter.obPost(
+      '/zero-code/raw-query',
+      `OAUTH2_global:*`,
+      this.conversionHelpers.rawQuery,
     );
   };
 
@@ -136,6 +145,7 @@ class Conversion {
       this.setDeleteOneByIdEndpoints(tables);
       this.setCreateEndpoints(tables);
       this.setQueryEndpoints(tables);
+      this.setRawDataBaseQueryEndPoint();
       return res.json({ message: 'Endpoints refreshed', code: 200000 });
     } catch (error) {
       return this.returnError(

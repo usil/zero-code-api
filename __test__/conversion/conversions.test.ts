@@ -230,6 +230,7 @@ describe('All conversion functions work', () => {
     conversion.setDeleteOneByIdEndpoints = jest.fn();
     conversion.setCreateEndpoints = jest.fn();
     conversion.setQueryEndpoints = jest.fn();
+    conversion.setRawDataBaseQueryEndPoint = jest.fn();
 
     await conversion.refreshEndpoints(req, res, next);
 

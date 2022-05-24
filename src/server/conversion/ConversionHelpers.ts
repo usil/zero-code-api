@@ -51,6 +51,40 @@ class ConversionHelpers {
     return next(errorForNext.toJSON());
   };
 
+  rawQuery = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const dbQuery = req.body.dbQuery;
+      if (dbQuery === undefined) {
+        return this.returnError(
+          'Invalid body, dbQuery is required',
+          'Invalid body, dbQuery is required',
+          400001,
+          400,
+          'getAll',
+          next,
+        );
+      }
+
+      const result = await this.knex.raw(dbQuery);
+
+      return res.status(201).json({
+        code: 200000,
+        message: 'Raw query executed',
+        content: result,
+      });
+    } catch (error) {
+      return this.returnError(
+        error.message,
+        error.message,
+        500001,
+        500,
+        'getAll',
+        next,
+        error,
+      );
+    }
+  };
+
   getAll = (tableName: string) => {
     return async (req: Request, res: Response, next: NextFunction) => {
       try {

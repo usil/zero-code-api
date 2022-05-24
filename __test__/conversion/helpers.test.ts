@@ -52,6 +52,95 @@ describe('All conversion helper functions works', () => {
     });
   });
 
+  it('Raw query works', async () => {
+    const knex = {
+      raw: jest.fn().mockResolvedValue([1]),
+    } as any as Knex;
+    const req = {
+      body: {
+        dbQuery: 'SELECT',
+      },
+    } as any as Request;
+
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    } as any as Response;
+
+    const conversionHelpers = new ConversionHelpers(knex);
+
+    conversionHelpers.returnError = jest.fn();
+
+    const mockNext = jest.fn();
+
+    await conversionHelpers.rawQuery(req, res, mockNext);
+
+    expect(knex.raw).toHaveBeenCalledWith('SELECT');
+    expect(res.status).toHaveBeenCalledWith(201);
+    expect(res.json).toHaveBeenCalledWith({
+      code: 200000,
+      message: 'Raw query executed',
+      content: [1],
+    });
+  });
+
+  it('Raw query works fails', async () => {
+    const knex = {
+      raw: jest.fn().mockRejectedValue([1]),
+    } as any as Knex;
+    const req = {
+      body: {
+        dbQuery: 'SELECT',
+      },
+    } as any as Request;
+
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    } as any as Response;
+
+    const conversionHelpers = new ConversionHelpers(knex);
+
+    conversionHelpers.returnError = jest.fn();
+
+    const mockNext = jest.fn();
+
+    await conversionHelpers.rawQuery(req, res, mockNext);
+
+    expect(conversionHelpers.returnError).toHaveBeenCalled();
+  });
+
+  it('Raw query, no body', async () => {
+    const knex = {
+      raw: jest.fn().mockResolvedValue([1]),
+    } as any as Knex;
+    const req = {
+      body: {},
+    } as any as Request;
+
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    } as any as Response;
+
+    const conversionHelpers = new ConversionHelpers(knex);
+
+    conversionHelpers.returnError = jest.fn();
+
+    const mockNext = jest.fn();
+
+    await conversionHelpers.rawQuery(req, res, mockNext);
+
+    expect(conversionHelpers.returnError).toHaveBeenCalledWith(
+      'Invalid body, dbQuery is required',
+      'Invalid body, dbQuery is required',
+      400001,
+      400,
+      'getAll',
+      mockNext,
+    );
+  });
+
   it('Get all works with no query', async () => {
     const knex = {
       table: jest.fn().mockReturnThis(),
