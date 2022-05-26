@@ -65,7 +65,7 @@ class ServerInitialization
         {
           jwtSecret: this.configuration.jwtSecret,
           cryptoSecret: this.configuration.cryptoKey,
-          extraResources: parsedTables,
+          extraResources: [...parsedTables, 'api'],
           mainApplicationName: 'zero_code_api',
           clientIdSuffix: '::usil.zc.app',
           expiresIn: this.configuration.jwtTokenExpiresIn,

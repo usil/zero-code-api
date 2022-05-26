@@ -308,13 +308,17 @@ class Conversion {
   }
 
   setGetTablesList() {
-    this.authRouter.obGet('/table', ':', this.generalHelpers.getAllTables);
+    this.authRouter.obGet(
+      '/table',
+      'api:select',
+      this.generalHelpers.getAllTables,
+    );
   }
 
   setGetFullTable() {
     this.authRouter.obGet(
       '/table/:tableName',
-      ':',
+      'api:select',
       this.generalHelpers.getFullTable,
     );
   }
