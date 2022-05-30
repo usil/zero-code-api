@@ -101,6 +101,7 @@ class Conversion {
       this.setCreateEndpoints(tables);
       this.setQueryEndpoints(tables);
       this.setRawDataBaseQueryEndPoint();
+      this.setCreateTableEndpoint();
     } catch (error) {
       this.configuration.log().error(error.message);
       throw new Error(error.message);
@@ -146,6 +147,7 @@ class Conversion {
       this.setCreateEndpoints(tables);
       this.setQueryEndpoints(tables);
       this.setRawDataBaseQueryEndPoint();
+      this.setCreateTableEndpoint();
       return res.json({ message: 'Endpoints refreshed', code: 200000 });
     } catch (error) {
       return this.returnError(
@@ -231,6 +233,15 @@ class Conversion {
       );
     }
   };
+
+  setCreateTableEndpoint() {
+    this.authRouter.obPost(
+      '/zero-code/table',
+      `OAUTH2_global:*`,
+      this.conversionHelpers.validateCreateTableBody,
+      this.conversionHelpers.createTable,
+    );
+  }
 
   setSwaggerEndPoint() {
     this.conversionRouter.router.use('/docs', swaggerUI.serve);

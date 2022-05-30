@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { Knex } from 'knex';
 import ConversionHelpers from '../../src/server/conversion/ConversionHelpers';
+import CreateTableFromJson from '../../src/server/util/CreateTableFromJson';
 
 describe('All conversion helper functions works', () => {
   it('Get all works', async () => {
@@ -246,6 +247,112 @@ describe('All conversion helper functions works', () => {
       code: 200001,
       content: [1],
     });
+  });
+
+  it('Create table', async () => {
+    const mockKnex = {
+      raw: jest.fn().mockReturnValue([{ warningStatus: 0 }]),
+    } as any as Knex;
+
+    const req = {
+      body: { tableName: 'test', primaryKeyName: 'x' },
+    } as any as Request;
+
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    } as any as Response;
+
+    const conversionHelpers = new ConversionHelpers(mockKnex);
+
+    const generationSpy = jest
+      .spyOn(CreateTableFromJson.prototype, 'generateCreationStringFromJSON')
+      .mockReturnValue('sql statement');
+
+    await conversionHelpers.createTable(req, res, jest.fn());
+
+    expect(mockKnex.raw).toBeCalledWith('sql statement');
+
+    expect(res.json).toHaveBeenCalledWith({
+      message: 'Sql Executed',
+      code: 200000,
+      content: {
+        executedSQL: 'sql statement',
+      },
+    });
+
+    generationSpy.mockRestore();
+  });
+
+  it('Create table warning', async () => {
+    const mockKnex = {
+      raw: jest.fn().mockReturnValue([{ warningStatus: 1 }]),
+    } as any as Knex;
+
+    const req = {
+      body: { tableName: 'test', primaryKeyName: 'x' },
+    } as any as Request;
+
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    } as any as Response;
+
+    const conversionHelpers = new ConversionHelpers(mockKnex);
+
+    conversionHelpers.returnError = jest.fn();
+
+    const generationSpy = jest
+      .spyOn(CreateTableFromJson.prototype, 'generateCreationStringFromJSON')
+      .mockReturnValue('sql statement');
+
+    const mockNext = jest.fn();
+
+    await conversionHelpers.createTable(req, res, mockNext);
+
+    expect(conversionHelpers.returnError).toBeCalledWith(
+      'Table could not be created, most likely table already exist',
+      'Table could not be created, most likely table already exist',
+      400014,
+      400,
+      'createTable',
+      mockNext,
+    );
+
+    generationSpy.mockRestore();
+  });
+
+  it('Validate create table body', async () => {
+    const knex = {
+      table: jest.fn().mockReturnThis(),
+      insert: jest.fn().mockResolvedValue([1]),
+    } as any as Knex;
+
+    const req = {
+      body: {
+        tableName: 'test',
+        columns: {
+          table: {
+            type: 'x',
+          },
+        },
+      },
+    } as any as Request;
+
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    } as any as Response;
+
+    const mockNext = jest.fn();
+
+    const conversionHelpers = new ConversionHelpers(knex);
+
+    conversionHelpers.returnError = jest.fn();
+
+    await conversionHelpers.validateCreateTableBody(req, res, mockNext);
+
+    expect(mockNext).toHaveBeenCalled();
   });
 
   it('Create works multiple inserts', async () => {

@@ -145,16 +145,24 @@ class ServerInitialization
       onLibrary?: string;
       onFile?: string;
       logMessage?: string;
-      errorObject?: Record<string, any>;
+      originalError?: any;
     },
     _req: Request,
     res: Response,
     _next: NextFunction,
   ) => {
     const uudid = uuidv4();
-    this.configuration
-      .log()
-      .error(uudid, '-', err.logMessage || err.message, { ...err });
+    this.configuration.log().error(
+      uudid,
+      '-',
+      err.logMessage || err.message,
+      {
+        onFile: err.onFile,
+        onFunction: err.onFunction,
+        onLibrary: err.onLibrary,
+      },
+      err.originalError || undefined,
+    );
     return res.status(err.statusCode || 500).json({
       message: err.message,
       code: err.errorCode || 500000,

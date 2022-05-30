@@ -5,6 +5,7 @@ import request from 'supertest';
 import express from 'express';
 import Conversion from '../../src/server/conversion/Conversions';
 import MySqlConversion from '../../src/server/conversion/MysqlConversion';
+import OauthBoot from 'nodeboot-oauth2-starter';
 
 const testPort = 8081;
 
@@ -90,6 +91,37 @@ describe('Create an express app and an http server', () => {
     expect(errorMock).toHaveBeenCalled();
 
     getTablesSpy.mockRestore();
+  });
+
+  it('Init works', async () => {
+    const getTablesSpy = jest
+      .spyOn(MySqlConversion.prototype, 'getTables')
+      .mockReturnValue([[{ table_name: 'test' }], null] as any);
+
+    const initSpy = jest
+      .spyOn(OauthBoot.prototype, 'init')
+      .mockImplementation(() => 'test');
+
+    const errorMock = jest.fn();
+
+    serverInitialization.configuration.log = (() => {
+      return { error: jest.fn(), debug: jest.fn() };
+    }) as any;
+
+    serverInitialization.exposeDataBase = jest.fn();
+
+    serverInitialization.configuration.log = (() => {
+      return { error: jest.fn(), debug: jest.fn() };
+    }) as any;
+
+    await serverInitialization.init();
+
+    expect(getTablesSpy).toHaveBeenCalled();
+    expect(serverInitialization.exposeDataBase).toHaveBeenCalled();
+    expect(initSpy).toHaveBeenCalled();
+
+    getTablesSpy.mockRestore();
+    initSpy.mockRestore();
   });
 
   it('Add basic configuration works', () => {

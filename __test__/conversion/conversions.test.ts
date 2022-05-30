@@ -231,6 +231,7 @@ describe('All conversion functions work', () => {
     conversion.setCreateEndpoints = jest.fn();
     conversion.setQueryEndpoints = jest.fn();
     conversion.setRawDataBaseQueryEndPoint = jest.fn();
+    conversion.setCreateTableEndpoint = jest.fn();
 
     await conversion.refreshEndpoints(req, res, next);
 
@@ -240,10 +241,51 @@ describe('All conversion functions work', () => {
     expect(conversion.setDeleteOneByIdEndpoints).toHaveBeenCalled();
     expect(conversion.setCreateEndpoints).toHaveBeenCalled();
     expect(conversion.setQueryEndpoints).toHaveBeenCalled();
+    expect(conversion.setCreateTableEndpoint).toHaveBeenCalled();
     expect(res.json).toHaveBeenCalledWith({
       message: 'Endpoints refreshed',
       code: 200000,
     });
+    spyGetTables.mockRestore();
+  });
+
+  it('Test refresh endpoint errors from tables', async () => {
+    const spyGetTables = jest
+      .spyOn(MySqlConversion.prototype, 'getTables')
+      .mockResolvedValue([null, 'error']);
+
+    const knex = {
+      client: {
+        config: {
+          client: 'mysql2',
+        },
+      },
+    } as any as Knex;
+
+    const req = {
+      protocol: 'http',
+      get: jest.fn().mockReturnValue('1600'),
+      swaggerDoc: '',
+    } as any;
+
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    } as any as Response;
+
+    const next = jest.fn();
+
+    const oauthBoot = {} as any;
+
+    const conversion = new Conversion(knex, oauthBoot);
+
+    conversion.returnError = jest.fn();
+
+    await conversion.refreshEndpoints(req, res, next);
+
+    expect(conversion.returnError).toHaveBeenCalled();
+
+    spyGetTables.mockRestore();
   });
 
   it('Generates swagger fails', async () => {

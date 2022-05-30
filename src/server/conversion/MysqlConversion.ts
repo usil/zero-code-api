@@ -152,7 +152,6 @@ class MySqlConversion {
       this.tablesColumns = tablesColumns;
       return [{ tables: this.tables, tablesColumns: this.tablesColumns }, null];
     } catch (error) {
-      console.log(error);
       return [null, error.message];
     }
   }

@@ -1,20 +1,14 @@
+import { validate } from 'class-validator';
 import { NextFunction, Request, Response } from 'express';
 import { Knex } from 'knex';
 import tableSettings from '../../tableSettings';
+import CreateTableFromJson from '../util/CreateTableFromJson';
 import ErrorForNext from '../util/ErrorForNext';
-
-class QueryBody {
-  filters: Filter[];
-  fields?: string[];
-}
-
-class Filter {
-  column: string;
-  value: any;
-  operation: '<' | '>' | '=' | '<=' | '>=' | '<>' | 'in' | 'between' | 'null';
-  negate: boolean;
-  operator: 'and' | 'or';
-}
+import {
+  Filter,
+  QueryBody,
+  TableCreationBody,
+} from './../dtos/ConversionHelpersInterfaces';
 
 class ConversionHelpers {
   knex: Knex;
@@ -51,6 +45,91 @@ class ConversionHelpers {
     return next(errorForNext.toJSON());
   };
 
+  validateCreateTableBody = async (
+    req: Request,
+    _res: Response,
+    next: NextFunction,
+  ) => {
+    try {
+      const talbleCreationBody = new TableCreationBody();
+      talbleCreationBody.tableName = req.body.tableName;
+      talbleCreationBody.columns = req.body.columns;
+      talbleCreationBody.primaryKeyName = req.body.primaryKeyName;
+      const errors = await validate(talbleCreationBody);
+      if (errors.length > 0) {
+        const fullMessage = errors.filter((err) =>
+          JSON.stringify(err.constraints || {}),
+        );
+        return this.returnError(
+          `Invalid body. ${fullMessage}`,
+          `Invalid body. ${fullMessage}`,
+          400003,
+          400,
+          'validateCreateTableBody',
+          next,
+          errors,
+        );
+      }
+      next();
+    } catch (error) {
+      return this.returnError(
+        error.message,
+        error.message,
+        500013,
+        500,
+        'validateCreateTableBody',
+        next,
+        error,
+      );
+    }
+  };
+
+  createTable = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const talbleCreationBody = req.body as TableCreationBody;
+
+      const table = new CreateTableFromJson(
+        talbleCreationBody.tableName,
+        talbleCreationBody.primaryKeyName,
+      );
+
+      const creationString = table.generateCreationStringFromJSON(
+        talbleCreationBody.columns,
+      );
+
+      const result = await this.knex.raw(creationString);
+
+      if (result[0] && result[0].warningStatus > 0) {
+        return this.returnError(
+          'Table could not be created, most likely table already exist',
+          'Table could not be created, most likely table already exist',
+          400014,
+          400,
+          'createTable',
+          next,
+        );
+      }
+
+      return res.json({
+        message: 'Sql Executed',
+        code: 200000,
+        content: {
+          executedSQL: creationString,
+        },
+      });
+    } catch (error) {
+      return this.returnError(
+        error.message,
+        error.message,
+        500011,
+        500,
+        'createTable',
+        next,
+        error,
+      );
+    }
+  };
+
   rawQuery = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const dbQuery = req.body.dbQuery;
@@ -76,9 +155,9 @@ class ConversionHelpers {
       return this.returnError(
         error.message,
         error.message,
-        500001,
+        500010,
         500,
-        'getAll',
+        'rawQuery',
         next,
         error,
       );
