@@ -13,6 +13,15 @@ import {
 export class QueryBody {
   filters: Filter[];
   fields?: string[];
+  pagination?: {
+    pagination: boolean;
+    itemsPerPage: number;
+    pageIndex: number;
+  };
+  sort?: {
+    byColumn: string;
+    direction: 'asc' | 'desc';
+  };
 }
 
 export class Filter {

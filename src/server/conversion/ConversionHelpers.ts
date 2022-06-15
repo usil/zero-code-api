@@ -133,6 +133,7 @@ class ConversionHelpers {
   rawQuery = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const dbQuery = req.body.dbQuery;
+
       if (dbQuery === undefined) {
         return this.returnError(
           'Invalid body, dbQuery is required',
@@ -404,24 +405,30 @@ class ConversionHelpers {
         let itemsPerPage = 20;
         let pageIndex = 0;
 
-        if (req.query['pagination'] && req.query['pagination'] === 'false')
-          pagination = false;
-
-        if (
-          req.query['itemsPerPage'] &&
-          parseInt(req.query['itemsPerPage'] as string) >= 1
-        ) {
-          itemsPerPage = parseInt(req.query['itemsPerPage'] as string);
-        }
-
-        if (
-          req.query['pageIndex'] &&
-          parseInt(req.query['pageIndex'] as string) >= 0
-        ) {
-          pageIndex = parseInt(req.query['pageIndex'] as string);
-        }
-
         const parsedBody = req.body as QueryBody;
+
+        if (parsedBody.pagination === undefined) {
+          if (req.query['pagination'] && req.query['pagination'] === 'false')
+            pagination = false;
+
+          if (
+            req.query['itemsPerPage'] &&
+            parseInt(req.query['itemsPerPage'] as string) >= 1
+          ) {
+            itemsPerPage = parseInt(req.query['itemsPerPage'] as string);
+          }
+
+          if (
+            req.query['pageIndex'] &&
+            parseInt(req.query['pageIndex'] as string) >= 0
+          ) {
+            pageIndex = parseInt(req.query['pageIndex'] as string);
+          }
+        } else {
+          pagination = parsedBody.pagination.pagination;
+          itemsPerPage = parsedBody.pagination.itemsPerPage;
+          pageIndex = parsedBody.pagination.pageIndex;
+        }
 
         const columnsToSelect = this.columnsToSelect(
           tableName,
@@ -442,7 +449,13 @@ class ConversionHelpers {
             countBaseQuery,
           ).count();
           const offset = itemsPerPage * pageIndex;
-          const paginationQuery = query.limit(itemsPerPage).offset(offset);
+          let paginationQuery = query.limit(itemsPerPage).offset(offset);
+          if (parsedBody.sort) {
+            paginationQuery = paginationQuery.orderBy(
+              parsedBody.sort.byColumn,
+              parsedBody.sort.direction,
+            );
+          }
           const count = (await countQuery)[0]['count(*)'];
           const totalPages = Math.ceil(count / itemsPerPage);
           const itemsResult = await paginationQuery;
