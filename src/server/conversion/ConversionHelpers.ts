@@ -438,7 +438,7 @@ class ConversionHelpers {
 
         const baseQuery = this.knex.table(tableName).select(...columnsToSelect);
 
-        const query = this.createFilter(parsedBody.filters || [], baseQuery);
+        let query = this.createFilter(parsedBody.filters || [], baseQuery);
 
         if (pagination) {
           const countBaseQuery = this.knex
@@ -449,16 +449,18 @@ class ConversionHelpers {
             countBaseQuery,
           ).count();
           const offset = itemsPerPage * pageIndex;
-          let paginationQuery = query.limit(itemsPerPage).offset(offset);
+          if (itemsPerPage > -1) {
+            query = query.limit(itemsPerPage).offset(offset);
+          }
           if (parsedBody.sort) {
-            paginationQuery = paginationQuery.orderBy(
+            query = query.orderBy(
               parsedBody.sort.byColumn,
               parsedBody.sort.direction,
             );
           }
           const count = (await countQuery)[0]['count(*)'];
           const totalPages = Math.ceil(count / itemsPerPage);
-          const itemsResult = await paginationQuery;
+          const itemsResult = await query;
           return res.status(200).json({
             content: {
               items: itemsResult,
