@@ -495,6 +495,14 @@ class ConversionHelpers {
   createFilter = (filters: Filter[], queryBase: Knex.QueryBuilder) => {
     let query = queryBase;
     for (const filter of filters) {
+      if (filter.negate === 'false') {
+        filter.negate = false;
+      }
+
+      if (filter.negate === 'true') {
+        filter.negate = true;
+      }
+
       const baseWhereQuery = filter.operator === 'and' ? 'where' : 'orWhere';
       const whereQuery = filter.negate
         ? `${baseWhereQuery}Not`
@@ -509,7 +517,13 @@ class ConversionHelpers {
         case 'like':
           query = query[
             whereQuery as 'orWhere' | 'where' | 'whereNot' | 'orWhereNot'
-          ](filter.column, filter.operation, filter.value);
+          ](
+            filter.column,
+            filter.operation,
+            filter.operation === 'like'
+              ? '%' + filter.value + '%'
+              : filter.value,
+          );
           break;
         case 'in':
           const queryFunctionWhereIn = `${whereQuery}In`;

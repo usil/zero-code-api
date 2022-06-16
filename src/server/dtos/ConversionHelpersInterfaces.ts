@@ -38,7 +38,7 @@ export class Filter {
     | 'between'
     | 'like'
     | 'null';
-  negate: boolean;
+  negate: boolean | 'false' | 'true';
   operator: 'and' | 'or';
 }
 
