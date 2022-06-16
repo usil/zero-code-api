@@ -506,6 +506,7 @@ class ConversionHelpers {
         case '<=':
         case '>=':
         case '<>':
+        case 'like':
           query = query[
             whereQuery as 'orWhere' | 'where' | 'whereNot' | 'orWhereNot'
           ](filter.column, filter.operation, filter.value);

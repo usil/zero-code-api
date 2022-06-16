@@ -27,7 +27,17 @@ export class QueryBody {
 export class Filter {
   column: string;
   value: any;
-  operation: '<' | '>' | '=' | '<=' | '>=' | '<>' | 'in' | 'between' | 'null';
+  operation:
+    | '<'
+    | '>'
+    | '='
+    | '<='
+    | '>='
+    | '<>'
+    | 'in'
+    | 'between'
+    | 'like'
+    | 'null';
   negate: boolean;
   operator: 'and' | 'or';
 }
