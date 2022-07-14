@@ -20,7 +20,7 @@ export class ConfigGlobalDto {
   occultSystemTables: boolean;
   cryptoKey: string;
   customSecurity: {
-    useCustomSecurity: false;
+    useCustomSecurity: boolean;
     checkPermissionEndpoint: string;
     token: string;
     appIdentifier: string;
