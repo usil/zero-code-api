@@ -21,9 +21,18 @@ export class ConfigGlobalDto {
   cryptoKey: string;
   customSecurity: {
     useCustomSecurity: boolean;
-    checkPermissionEndpoint: string;
-    token: string;
-    appIdentifier: string;
+    httpBaseUrl: string;
+    validateAccess: {
+      endpoint: string;
+      requestConf: {
+        body: Record<string, string>;
+        headers: Record<string, string>;
+      };
+      responseEvaluationConfig: {
+        valueToEvaluate: string;
+        equalTo: boolean | string | number;
+      };
+    };
   };
 }
 

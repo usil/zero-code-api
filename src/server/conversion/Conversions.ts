@@ -8,7 +8,7 @@ import { NextFunction, Request, Response, Router } from 'express';
 import SwaggerGenerator from './SwaggerGenerator';
 import GeneralHelpers from './GeneralHelpers';
 import ErrorForNext from '../util/ErrorForNext';
-import Horus from '../util/Horus';
+import CustomSecurity from '../util/CustomSecurity';
 
 interface Table {
   table_name: string;
@@ -51,15 +51,13 @@ class Conversion {
   conversionHelpers: ConversionHelpers;
   conversionRouter: Route;
   generalHelpers: GeneralHelpers;
-  horus: Horus;
+  horus: CustomSecurity;
 
   constructor(knex: Knex, oauthBoot?: any) {
     this.oauthBoot = oauthBoot;
     this.knex = knex;
     this.knexConfig = knex.client.config;
-    this.horus = new Horus(
-      this.configuration.customSecurity.checkPermissionEndpoint,
-    );
+    this.horus = new CustomSecurity();
   }
 
   returnError = (
@@ -141,7 +139,7 @@ class Conversion {
     } else {
       (this.authRouter as Router).post(
         `/zero-code/refresh`,
-        this.horus.sendSecurityRequest(`OAUTH2_global:*`),
+        this.horus.validateAccess(`OAUTH2_global:*`),
         this.refreshEndpoints,
       );
     }
@@ -157,7 +155,7 @@ class Conversion {
     } else {
       (this.authRouter as Router).post(
         '/zero-code/raw-query',
-        this.horus.sendSecurityRequest(`OAUTH2_global:*`),
+        this.horus.validateAccess(`OAUTH2_global:*`),
         this.conversionHelpers.rawQuery,
       );
     }
@@ -284,7 +282,7 @@ class Conversion {
     } else {
       (this.authRouter as Router).post(
         '/zero-code/table',
-        this.horus.sendSecurityRequest(`OAUTH2_global:*`),
+        this.horus.validateAccess(`OAUTH2_global:*`),
         this.conversionHelpers.validateCreateTableBody,
         this.conversionHelpers.createTable,
       );
@@ -312,7 +310,7 @@ class Conversion {
       } else {
         (this.authRouter as Router).get(
           `/${tableName}`,
-          this.horus.sendSecurityRequest(`${tableName}:select`),
+          this.horus.validateAccess(`${tableName}:select`),
           this.conversionHelpers.getAll(tableName),
         );
       }
@@ -331,7 +329,7 @@ class Conversion {
       } else {
         (this.authRouter as Router).get(
           `/${tableName}/:id`,
-          this.horus.sendSecurityRequest(`${tableName}:select`),
+          this.horus.validateAccess(`${tableName}:select`),
           this.conversionHelpers.getOneById(tableName),
         );
       }
@@ -350,7 +348,7 @@ class Conversion {
       } else {
         (this.authRouter as Router).put(
           `/${tableName}/:id`,
-          this.horus.sendSecurityRequest(`${tableName}:update`),
+          this.horus.validateAccess(`${tableName}:update`),
           this.conversionHelpers.updateOneById(tableName),
         );
       }
@@ -369,7 +367,7 @@ class Conversion {
       } else {
         (this.authRouter as Router).delete(
           `/${tableName}/:id`,
-          this.horus.sendSecurityRequest(`${tableName}:delete`),
+          this.horus.validateAccess(`${tableName}:delete`),
           this.conversionHelpers.deleteOneById(tableName),
         );
       }
@@ -388,7 +386,7 @@ class Conversion {
       } else {
         (this.authRouter as Router).post(
           `/${tableName}`,
-          this.horus.sendSecurityRequest(`${tableName}:create`),
+          this.horus.validateAccess(`${tableName}:create`),
           this.conversionHelpers.create(tableName),
         );
       }
@@ -407,7 +405,7 @@ class Conversion {
       } else {
         (this.authRouter as Router).post(
           `/${tableName}/query`,
-          this.horus.sendSecurityRequest(`${tableName}:select`),
+          this.horus.validateAccess(`${tableName}:select`),
           this.conversionHelpers.query(tableName),
         );
       }
@@ -424,7 +422,7 @@ class Conversion {
     } else {
       (this.authRouter as Router).get(
         '/table',
-        this.horus.sendSecurityRequest(`api:select`),
+        this.horus.validateAccess(`api:select`),
         this.generalHelpers.getAllTables,
       );
     }
@@ -440,7 +438,7 @@ class Conversion {
     } else {
       (this.authRouter as Router).get(
         '/table/:tableName',
-        this.horus.sendSecurityRequest(`api:select`),
+        this.horus.validateAccess(`api:select`),
         this.generalHelpers.getFullTable,
       );
     }

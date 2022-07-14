@@ -21,11 +21,27 @@ describe('Create an express app and an http server', () => {
     jest.spyOn(ServerInitialization.prototype, 'addKnexjsConfig');
     serverInitialization = new ServerInitialization(testPort);
     serverInitialization.configuration.customSecurity = {
-      useCustomSecurity: false,
-      checkPermissionEndpoint: '${CHECK_PERMISSION_ENDPOINT}',
-      token: '${HORUS_ACCESS_TOKEN}',
-      appIdentifier: '${HORUS_APP_IDENTIFIER}',
+      useCustomSecurity: true,
+      httpBaseUrl: 'http',
+      validateAccess: {
+        endpoint: '/someEndpoint',
+        requestConf: {
+          body: {
+            token: 'sometoken',
+            permission: '$.permissionString',
+            appIdentifier: 'appid',
+          },
+          headers: {
+            'x-usil-request-id': '$.permissionString',
+          },
+        },
+        responseEvaluationConfig: {
+          valueToEvaluate: '$.content.isAllowed',
+          equalTo: true,
+        },
+      },
     };
+
     serverInitialization.app = express();
     const routeTest = new Route('/test');
     routeTest.router.get('/', (req, res) => {

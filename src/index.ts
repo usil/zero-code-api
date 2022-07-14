@@ -11,6 +11,7 @@ const start = async (id: number) => {
 
   configuration.log().info(`Id Worker ${id}`);
   const serverApp = await newServer(port);
+
   const server = serverApp.server;
 
   server.on('listening', () => {

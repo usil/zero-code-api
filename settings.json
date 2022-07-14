@@ -15,8 +15,23 @@
   "jwtTokenExpiresIn": "24h",
   "customSecurity": {
     "useCustomSecurity": true,
-    "checkPermissionEndpoint": "${CHECK_PERMISSION_ENDPOINT}",
-    "token": "${HORUS_ACCESS_TOKEN}",
-    "appIdentifier": "${HORUS_APP_IDENTIFIER}"
+    "httpBaseUrl": "${CUSTOM_SECURITY_BASE_URL}",
+    "validateAccess": {
+      "endpoint": "${VALIDATE_TOKEN_ENDPOINT}",
+      "requestConf": {
+        "body": {
+          "token": "$.req.query.access_token",
+          "permission": "$.permissionString",
+          "appIdentifier": "${SECURITY_APP_IDENTIFIER}"
+        },
+        "headers": {
+          "x-usil-request-id": "$.randomString"
+        }
+      },
+      "responseEvaluationConfig": {
+        "valueToEvaluate": "$.content.isAllowed",
+        "equalTo": true
+      }
+    }
   }
 }
