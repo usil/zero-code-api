@@ -20,6 +20,12 @@ describe('Create an express app and an http server', () => {
     jest.spyOn(ServerInitialization.prototype, 'createServer');
     jest.spyOn(ServerInitialization.prototype, 'addKnexjsConfig');
     serverInitialization = new ServerInitialization(testPort);
+    serverInitialization.configuration.customSecurity = {
+      useCustomSecurity: false,
+      checkPermissionEndpoint: '${CHECK_PERMISSION_ENDPOINT}',
+      token: '${HORUS_ACCESS_TOKEN}',
+      appIdentifier: '${HORUS_APP_IDENTIFIER}',
+    };
     serverInitialization.app = express();
     const routeTest = new Route('/test');
     routeTest.router.get('/', (req, res) => {
@@ -48,7 +54,16 @@ describe('Create an express app and an http server', () => {
     expect(response.statusCode).toBe(200);
   });
 
-  it('Expose database works', () => {
+  it('Skip morgan', () => {
+    const req = { url: '/health' };
+    const result = serverInitialization.skipMorgan(req as any, {} as any);
+    expect(result).toBe(true);
+    req.url = '/some';
+    const resultTwo = serverInitialization.skipMorgan(req as any, {} as any);
+    expect(resultTwo).toBe(false);
+  });
+
+  it('Expose database with custom security', () => {
     const knex = {
       client: {
         config: { config: 1 },
@@ -65,12 +80,32 @@ describe('Create an express app and an http server', () => {
       .mockImplementation((() => {
         return true;
       }) as any);
-    serverInitialization.exposeDataBase({}, knex as any);
-    expect(serverInitialization.addRoutes).toHaveBeenCalled();
+
+    serverInitialization.exposeDataBaseWithCustomSecurity(knex as any);
     expect(conversionSpy).toHaveBeenCalled();
     expect(addRoutesSpy).toHaveBeenCalled();
     conversionSpy.mockRestore();
     addRoutesSpy.mockRestore();
+  });
+
+  it('Expose database works', () => {
+    const knex = {
+      client: {
+        config: { config: 1 },
+      },
+    };
+
+    serverInitialization.addRoutes = jest.fn();
+
+    const conversionSpy = jest
+      .spyOn(Conversion.prototype, 'generateConversionRouter')
+      .mockImplementation((() => {
+        return true;
+      }) as any);
+
+    serverInitialization.exposeDataBase({}, knex as any);
+    expect(conversionSpy).toHaveBeenCalled();
+    conversionSpy.mockRestore();
   });
 
   it('Init errors', async () => {
@@ -94,6 +129,8 @@ describe('Create an express app and an http server', () => {
   });
 
   it('Init works', async () => {
+    serverInitialization.useCustomSecurity = false;
+    false;
     const getTablesSpy = jest
       .spyOn(MySqlConversion.prototype, 'getTables')
       .mockReturnValue([[{ table_name: 'test' }], null] as any);
@@ -124,7 +161,36 @@ describe('Create an express app and an http server', () => {
     initSpy.mockRestore();
   });
 
+  it('Init with custom security', async () => {
+    const getTablesSpy = jest
+      .spyOn(MySqlConversion.prototype, 'getTables')
+      .mockReturnValue([[{ table_name: 'test' }], null] as any);
+
+    serverInitialization.useCustomSecurity = true;
+
+    serverInitialization.configuration.log = (() => {
+      return { error: jest.fn(), debug: jest.fn() };
+    }) as any;
+
+    serverInitialization.exposeDataBaseWithCustomSecurity = jest.fn();
+
+    serverInitialization.configuration.log = (() => {
+      return { error: jest.fn(), debug: jest.fn() };
+    }) as any;
+
+    await serverInitialization.init();
+
+    expect(getTablesSpy).toHaveBeenCalled();
+    expect(
+      serverInitialization.exposeDataBaseWithCustomSecurity,
+    ).toHaveBeenCalled();
+
+    getTablesSpy.mockRestore();
+  });
+
   it('Add basic configuration works', () => {
+    serverInitialization.useCustomSecurity = false;
+
     const useMock = jest.fn();
     const obGetMock = jest.fn();
 
@@ -136,6 +202,22 @@ describe('Create an express app and an http server', () => {
     serverInitialization.addBasicConfiguration();
     expect(useMock).toHaveBeenCalledTimes(6);
     expect(obGetMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('Add basic configuration works with custom security', () => {
+    serverInitialization.useCustomSecurity = true;
+
+    const useMock = jest.fn();
+    const getMock = jest.fn();
+
+    serverInitialization.app = {
+      use: useMock,
+      get: getMock,
+    };
+
+    serverInitialization.addBasicConfiguration();
+    expect(useMock).toHaveBeenCalledTimes(6);
+    expect(getMock).toHaveBeenCalledTimes(1);
   });
 
   it('Health endpoint works', () => {

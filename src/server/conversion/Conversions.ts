@@ -4,10 +4,11 @@ import Route from '../util/Route';
 import ConversionHelpers from './ConversionHelpers';
 import swaggerUI from 'swagger-ui-express';
 import MysqlConversion from './MysqlConversion';
-import { NextFunction, Request, Response } from 'express';
+import { NextFunction, Request, Response, Router } from 'express';
 import SwaggerGenerator from './SwaggerGenerator';
 import GeneralHelpers from './GeneralHelpers';
 import ErrorForNext from '../util/ErrorForNext';
+import Horus from '../util/Horus';
 
 interface Table {
   table_name: string;
@@ -29,6 +30,18 @@ interface Column {
   referenced_column_name?: string;
 }
 
+/*
+  En lugar oauhtboot usar simple express this.authRouter pasa a ser un simple router express, crear un middleware para consumir horus
+
+  - Agregar parametro nuevo a configuracion y hacer que la inicializacion de oauht2 no suceda 1h 
+
+  - Dejar de usar obGET-POST-PUT-ETC y router dado el parametro anterior 4h
+  
+  - Crear middleware para horus ?h
+
+  - Implementar middleware para horus en cada funcion ? 2h
+*/
+
 class Conversion {
   knex: Knex;
   oauthBoot: any;
@@ -38,11 +51,15 @@ class Conversion {
   conversionHelpers: ConversionHelpers;
   conversionRouter: Route;
   generalHelpers: GeneralHelpers;
+  horus: Horus;
 
-  constructor(knex: Knex, oauthBoot: any) {
+  constructor(knex: Knex, oauthBoot?: any) {
     this.oauthBoot = oauthBoot;
     this.knex = knex;
     this.knexConfig = knex.client.config;
+    this.horus = new Horus(
+      this.configuration.customSecurity.checkPermissionEndpoint,
+    );
   }
 
   returnError = (
@@ -78,10 +95,16 @@ class Conversion {
       this.conversionHelpers = new ConversionHelpers(this.knex);
       this.generalHelpers = new GeneralHelpers(this.knex, this.configuration);
       this.conversionRouter = new Route('/api');
-      this.authRouter = this.oauthBoot.bootOauthExpressRouter(
-        this.conversionRouter.router,
-        '/api',
-      );
+
+      if (this.oauthBoot) {
+        this.authRouter = this.oauthBoot.bootOauthExpressRouter(
+          this.conversionRouter.router,
+          '/api',
+        );
+      } else {
+        this.authRouter = this.conversionRouter.router;
+      }
+
       const mysqlConversion = new MysqlConversion(
         this.knex,
         this.configuration,
@@ -109,19 +132,35 @@ class Conversion {
   }
 
   setRefreshEndpoint = () => {
-    this.authRouter.obPost(
-      `/zero-code/refresh`,
-      `OAUTH2_global:*`,
-      this.refreshEndpoints,
-    );
+    if (this.oauthBoot) {
+      this.authRouter.obPost(
+        `/zero-code/refresh`,
+        `OAUTH2_global:*`,
+        this.refreshEndpoints,
+      );
+    } else {
+      (this.authRouter as Router).post(
+        `/zero-code/refresh`,
+        this.horus.sendSecurityRequest(`OAUTH2_global:*`),
+        this.refreshEndpoints,
+      );
+    }
   };
 
   setRawDataBaseQueryEndPoint = () => {
-    this.authRouter.obPost(
-      '/zero-code/raw-query',
-      `OAUTH2_global:*`,
-      this.conversionHelpers.rawQuery,
-    );
+    if (this.oauthBoot) {
+      this.authRouter.obPost(
+        '/zero-code/raw-query',
+        `OAUTH2_global:*`,
+        this.conversionHelpers.rawQuery,
+      );
+    } else {
+      (this.authRouter as Router).post(
+        '/zero-code/raw-query',
+        this.horus.sendSecurityRequest(`OAUTH2_global:*`),
+        this.conversionHelpers.rawQuery,
+      );
+    }
   };
 
   refreshEndpoints = async (
@@ -235,12 +274,21 @@ class Conversion {
   };
 
   setCreateTableEndpoint() {
-    this.authRouter.obPost(
-      '/zero-code/table',
-      `OAUTH2_global:*`,
-      this.conversionHelpers.validateCreateTableBody,
-      this.conversionHelpers.createTable,
-    );
+    if (this.oauthBoot) {
+      this.authRouter.obPost(
+        '/zero-code/table',
+        `OAUTH2_global:*`,
+        this.conversionHelpers.validateCreateTableBody,
+        this.conversionHelpers.createTable,
+      );
+    } else {
+      (this.authRouter as Router).post(
+        '/zero-code/table',
+        this.horus.sendSecurityRequest(`OAUTH2_global:*`),
+        this.conversionHelpers.validateCreateTableBody,
+        this.conversionHelpers.createTable,
+      );
+    }
   }
 
   setSwaggerEndPoint() {
@@ -255,83 +303,147 @@ class Conversion {
   setGetALLEndpoints(tablesList: Table[]) {
     for (const table of tablesList) {
       const tableName = table.table_name;
-      this.authRouter.obGet(
-        `/${tableName}`,
-        `${tableName}:select`,
-        this.conversionHelpers.getAll(tableName),
-      );
+      if (this.oauthBoot) {
+        this.authRouter.obGet(
+          `/${tableName}`,
+          `${tableName}:select`,
+          this.conversionHelpers.getAll(tableName),
+        );
+      } else {
+        (this.authRouter as Router).get(
+          `/${tableName}`,
+          this.horus.sendSecurityRequest(`${tableName}:select`),
+          this.conversionHelpers.getAll(tableName),
+        );
+      }
     }
   }
 
   setGetOneByIdEndpoints(tablesList: Table[]) {
     for (const table of tablesList) {
       const tableName = table.table_name;
-      this.authRouter.obGet(
-        `/${tableName}/:id`,
-        `${tableName}:select`,
-        this.conversionHelpers.getOneById(tableName),
-      );
+      if (this.oauthBoot) {
+        this.authRouter.obGet(
+          `/${tableName}/:id`,
+          `${tableName}:select`,
+          this.conversionHelpers.getOneById(tableName),
+        );
+      } else {
+        (this.authRouter as Router).get(
+          `/${tableName}/:id`,
+          this.horus.sendSecurityRequest(`${tableName}:select`),
+          this.conversionHelpers.getOneById(tableName),
+        );
+      }
     }
   }
 
   setGetUpdateByIdEndpoints(tablesList: Table[]) {
     for (const table of tablesList) {
       const tableName = table.table_name;
-      this.authRouter.obPut(
-        `/${tableName}/:id`,
-        `${tableName}:update`,
-        this.conversionHelpers.updateOneById(tableName),
-      );
+      if (this.oauthBoot) {
+        this.authRouter.obPut(
+          `/${tableName}/:id`,
+          `${tableName}:update`,
+          this.conversionHelpers.updateOneById(tableName),
+        );
+      } else {
+        (this.authRouter as Router).put(
+          `/${tableName}/:id`,
+          this.horus.sendSecurityRequest(`${tableName}:update`),
+          this.conversionHelpers.updateOneById(tableName),
+        );
+      }
     }
   }
 
   setDeleteOneByIdEndpoints(tablesList: Table[]) {
     for (const table of tablesList) {
       const tableName = table.table_name;
-      this.authRouter.obDelete(
-        `/${tableName}/:id`,
-        `${tableName}:delete`,
-        this.conversionHelpers.deleteOneById(tableName),
-      );
+      if (this.oauthBoot) {
+        this.authRouter.obDelete(
+          `/${tableName}/:id`,
+          `${tableName}:delete`,
+          this.conversionHelpers.deleteOneById(tableName),
+        );
+      } else {
+        (this.authRouter as Router).delete(
+          `/${tableName}/:id`,
+          this.horus.sendSecurityRequest(`${tableName}:delete`),
+          this.conversionHelpers.deleteOneById(tableName),
+        );
+      }
     }
   }
 
   setCreateEndpoints(tablesList: Table[]) {
     for (const table of tablesList) {
       const tableName = table.table_name;
-      this.authRouter.obPost(
-        `/${tableName}`,
-        `${tableName}:create`,
-        this.conversionHelpers.create(tableName),
-      );
+      if (this.oauthBoot) {
+        this.authRouter.obPost(
+          `/${tableName}`,
+          `${tableName}:create`,
+          this.conversionHelpers.create(tableName),
+        );
+      } else {
+        (this.authRouter as Router).post(
+          `/${tableName}`,
+          this.horus.sendSecurityRequest(`${tableName}:create`),
+          this.conversionHelpers.create(tableName),
+        );
+      }
     }
   }
 
   setQueryEndpoints(tablesList: Table[]) {
     for (const table of tablesList) {
       const tableName = table.table_name;
-      this.authRouter.obPost(
-        `/${tableName}/query`,
-        `${tableName}:select`,
-        this.conversionHelpers.query(tableName),
-      );
+      if (this.oauthBoot) {
+        this.authRouter.obPost(
+          `/${tableName}/query`,
+          `${tableName}:select`,
+          this.conversionHelpers.query(tableName),
+        );
+      } else {
+        (this.authRouter as Router).post(
+          `/${tableName}/query`,
+          this.horus.sendSecurityRequest(`${tableName}:select`),
+          this.conversionHelpers.query(tableName),
+        );
+      }
     }
   }
 
   setGetTablesList() {
-    this.authRouter.obGet(
-      '/table',
-      'api:select',
-      this.generalHelpers.getAllTables,
-    );
+    if (this.oauthBoot) {
+      this.authRouter.obGet(
+        '/table',
+        'api:select',
+        this.generalHelpers.getAllTables,
+      );
+    } else {
+      (this.authRouter as Router).get(
+        '/table',
+        this.horus.sendSecurityRequest(`api:select`),
+        this.generalHelpers.getAllTables,
+      );
+    }
   }
 
   setGetFullTable() {
-    this.authRouter.obGet(
-      '/table/:tableName',
-      'api:select',
-      this.generalHelpers.getFullTable,
-    );
+    if (this.oauthBoot) {
+      this.authRouter.obGet(
+        '/table/:tableName',
+        'api:select',
+        this.generalHelpers.getFullTable,
+      );
+    } else {
+      (this.authRouter as Router).get(
+        '/table/:tableName',
+        this.horus.sendSecurityRequest(`api:select`),
+        this.generalHelpers.getFullTable,
+      );
+    }
   }
 }
 

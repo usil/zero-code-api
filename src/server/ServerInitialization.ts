@@ -30,6 +30,7 @@ class ServerInitialization
   routes: string[] = [];
   knexPool: Knex;
   configuration = getConfig();
+  useCustomSecurity: boolean;
 
   /**
    *Creates an instance of ExpressAPP.
@@ -39,6 +40,9 @@ class ServerInitialization
     this.addKnexjsConfig();
 
     this.baseExpressApp = express();
+
+    this.useCustomSecurity =
+      this.configuration.customSecurity.useCustomSecurity;
 
     this.port = port;
   }
@@ -58,27 +62,44 @@ class ServerInitialization
 
       const parsedTables = tables.map((t) => t.table_name);
 
-      const oauthBoot = new OauthBoot(
-        this.baseExpressApp,
-        this.knexPool,
-        this.configuration.log(),
-        {
-          jwtSecret: this.configuration.jwtSecret,
-          cryptoSecret: this.configuration.cryptoKey,
-          extraResources: [...parsedTables, 'api'],
-          mainApplicationName: 'zero_code_api',
-          clientIdSuffix: '::usil.zc.app',
-          expiresIn: this.configuration.jwtTokenExpiresIn,
-        },
-      );
+      //! inicializa la seguridad
 
-      this.app = oauthBoot.expressSecured;
+      if (!this.useCustomSecurity) {
+        const oauthBoot = new OauthBoot(
+          this.baseExpressApp,
+          this.knexPool,
+          this.configuration.log(),
+          {
+            jwtSecret: this.configuration.jwtSecret,
+            cryptoSecret: this.configuration.cryptoKey,
+            extraResources: [...parsedTables, 'api'],
+            mainApplicationName: 'zero_code_api',
+            clientIdSuffix: '::usil.zc.app',
+            expiresIn: this.configuration.jwtTokenExpiresIn,
+          },
+        );
+
+        this.app = oauthBoot.expressSecured;
+
+        this.addBasicConfiguration();
+
+        await oauthBoot.init();
+
+        await this.exposeDataBase(oauthBoot, this.knexPool);
+
+        //! todo esto deberia cambiar. configuration, tenga una variable use external security
+
+        /* 
+        this.app.obGET, obPost, etc dejaria de existir como horus realiza la seguridad?
+      */
+        return;
+      }
+
+      this.app = express();
 
       this.addBasicConfiguration();
 
-      await oauthBoot.init();
-
-      await this.exposeDataBase(oauthBoot, this.knexPool);
+      await this.exposeDataBaseWithCustomSecurity(this.knexPool);
     } catch (error) {
       this.configuration
         .log()
@@ -110,6 +131,17 @@ class ServerInitialization
     this.addRoutes(conversion.conversionRouter);
   }
 
+  async exposeDataBaseWithCustomSecurity(knexPool: Knex) {
+    const conversion = new Conversion(knexPool);
+    await conversion.generateConversionRouter();
+    this.addRoutes(conversion.conversionRouter);
+  }
+
+  skipMorgan = (req: Request, _res: Response) => {
+    if (req.url == '/health' || req.url === '/') return true;
+    return false;
+  };
+
   /**
    * @description Adds the basic configuration for the app
    */
@@ -119,15 +151,17 @@ class ServerInitialization
     this.app.use(cors());
     this.app.use(
       morgan(':method :url', {
-        skip: function (req: Request, _res: Response) {
-          if (req.url == '/health' || req.url === '/') return true;
-          return false;
-        },
+        skip: this.skipMorgan,
       }),
     );
     this.app.use(express.json());
     this.app.use(express.urlencoded({ extended: true }));
-    this.app.obGet('/', ':', this.healthEndpoint);
+    //! Por ejemplo aqui en lugar de this.app.obGet simplemente this.app.get(...) y horus se encarga de que el healht endpoint no tenga seguridad.
+    if (!this.useCustomSecurity) {
+      this.app.obGet('/', ':', this.healthEndpoint);
+    } else {
+      this.app.get('/', this.healthEndpoint);
+    }
   }
 
   healthEndpoint(_req: Request, res: Response) {

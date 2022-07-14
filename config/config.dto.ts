@@ -19,6 +19,12 @@ export class ConfigGlobalDto {
   swaggerUrl: string;
   occultSystemTables: boolean;
   cryptoKey: string;
+  customSecurity: {
+    useCustomSecurity: false;
+    checkPermissionEndpoint: string;
+    token: string;
+    appIdentifier: string;
+  };
 }
 
 export default new ConfigGlobalDto();

@@ -12,5 +12,11 @@
   "swaggerUrl": "${SWAGGER_URL}",
   "cryptoKey": "${CRYPTO_KEY}",
   "occultSystemTables": true,
-  "jwtTokenExpiresIn": "24h"
+  "jwtTokenExpiresIn": "24h",
+  "customSecurity": {
+    "useCustomSecurity": true,
+    "checkPermissionEndpoint": "${CHECK_PERMISSION_ENDPOINT}",
+    "token": "${HORUS_ACCESS_TOKEN}",
+    "appIdentifier": "${HORUS_APP_IDENTIFIER}"
+  }
 }

@@ -4,7 +4,7 @@
   "description": "Zero code api",
   "main": "./dist/main.js",
   "scripts": {
-    "test": "cross-env NODE_ENV=test PORT=2000 DATA_BASE_PORT=2001 jest   --verbose --collectCoverage  && jest-coverage-badges",
+    "test": "cross-env NODE_ENV=test PORT=2000 DATA_BASE_PORT=2001 jest --verbose --collectCoverage",
     "test:watch": "npm test -- --watch",
     "start": "cross-env NODE_ENV=production node ./dist/main.js",
     "dev": "cross-env NODE_ENV=development npx ts-node-dev ./src/index.ts",
@@ -14,6 +14,7 @@
   "license": "ISC",
   "dependencies": {
     "advanced-settings": "git+https://github.com/usil/advanced-settings.git",
+    "axios": "^0.27.2",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.13.2",
     "compression": "^1.7.4",
