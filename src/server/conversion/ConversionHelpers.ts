@@ -86,15 +86,15 @@ class ConversionHelpers {
 
   createTable = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const talbleCreationBody = req.body as TableCreationBody;
+      const tableCreationBody = req.body as TableCreationBody;
 
       const table = new CreateTableFromJson(
-        talbleCreationBody.tableName,
-        talbleCreationBody.primaryKeyName,
+        tableCreationBody.tableName,
+        tableCreationBody.primaryKeyName,
       );
 
       const creationString = table.generateCreationStringFromJSON(
-        talbleCreationBody.columns,
+        tableCreationBody.columns,
       );
 
       const result = await this.knex.raw(creationString);
