@@ -51,11 +51,11 @@ class ConversionHelpers {
     next: NextFunction,
   ) => {
     try {
-      const talbleCreationBody = new TableCreationBody();
-      talbleCreationBody.tableName = req.body.tableName;
-      talbleCreationBody.columns = req.body.columns;
-      talbleCreationBody.primaryKeyName = req.body.primaryKeyName;
-      const errors = await validate(talbleCreationBody);
+      const tableCreationBody = new TableCreationBody();
+      tableCreationBody.tableName = req.body.tableName;
+      tableCreationBody.columns = req.body.columns;
+      tableCreationBody.primaryKeyName = req.body.primaryKeyName;
+      const errors = await validate(tableCreationBody);
       if (errors.length > 0) {
         const fullMessage = errors.filter((err) =>
           JSON.stringify(err.constraints || {}),

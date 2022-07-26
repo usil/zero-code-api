@@ -24,9 +24,9 @@ class CreateTableFromJson {
     for (const columnName in columns) {
       const columnInfo = columns[columnName];
       completeStatement += `,\n${columnName} ${columnInfo.type}${
-        columnInfo.lenght ? '(' + columnInfo.lenght + ')' : ''
+        columnInfo.length ? '(' + columnInfo.length + ')' : ''
       }${columnInfo.isUnsigned ? ' UNSIGNED' : ''}${
-        columnInfo.isNotNulleable ? ' NOT NULL' : ' NULL'
+        columnInfo.isNotNullable ? ' NOT NULL' : ' NULL'
       }${this.parseDefaultValue(columnInfo.defaultValue)}${
         columnInfo.comment ? ` COMMENT '` + columnInfo.comment + `'` : ''
       }`;

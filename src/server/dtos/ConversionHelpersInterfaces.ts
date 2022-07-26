@@ -56,11 +56,11 @@ export class TableCreationColumn {
 
   @IsInt()
   @IsOptional()
-  lenght?: number;
+  length?: number;
 
   @IsBoolean()
   @IsOptional()
-  isNotNulleable?: boolean;
+  isNotNullable?: boolean;
 
   @IsBoolean()
   @IsOptional()
